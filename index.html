@@ -3,138 +3,159 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>NekoEmpire Pro</title>
+    <title>NekoEmpire Ultra</title>
     <style>
         :root {
-            --wood: #5d3a1a;
+            --wood: #4a2c13;
             --neko-pink: #ffafcc;
             --heart-red: #ff4d6d;
             --gold: #FFD700;
         }
 
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; font-family: 'Arial', sans-serif; overflow: hidden; background: #1a1a1a; color: white; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; font-family: 'Arial', sans-serif; overflow: hidden; background: #111; color: white; }
 
-        /* Arkaplanlar */
+        /* Bildirim Sistemi (Toast) */
+        #notification-container {
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+            z-index: 2000; width: 80%;
+        }
+        .toast {
+            background: rgba(0,0,0,0.9); border: 2px solid var(--neko-pink);
+            color: white; padding: 15px; border-radius: 12px; margin-bottom: 10px;
+            text-align: center; animation: slideDown 0.5s forwards, fadeOut 0.5s 2.5s forwards;
+            font-weight: bold; box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+        }
+        @keyframes slideDown { from { transform: translateY(-100px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; transform: translateY(-20px); } }
+
+        /* Arkaplan */
         #loading-screen { position: fixed; inset: 0; z-index: 1000; background: url('loading_bg.jpg') center/cover; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; padding-bottom: 20%; }
-        .bar-bg { width: 70%; height: 15px; background: rgba(0,0,0,0.6); border-radius: 10px; border: 2px solid white; overflow: hidden; }
-        .bar-fill { width: 0%; height: 100%; background: var(--neko-pink); transition: width 0.3s; }
-
         #app { display: none; width: 100%; height: 100%; background: url('oda_bg.jpg') center/cover; position: relative; }
 
-        /* Üst Panel */
-        .header { display: flex; justify-content: space-between; padding: 10px; z-index: 5; }
-        .status { background: rgba(0,0,0,0.8); padding: 10px; border-radius: 15px; border: 2px solid var(--neko-pink); font-size: 14px; font-weight: bold; }
-        .coin-icon-big { width: 24px; height: 24px; vertical-align: middle; margin-right: 5px; }
+        /* Üst Panel - Büyük İkonlar */
+        .header { display: flex; justify-content: space-between; padding: 12px; z-index: 10; position: relative; }
+        .status-group { display: flex; flex-direction: column; gap: 8px; }
+        .status { background: rgba(0,0,0,0.85); padding: 10px 15px; border-radius: 15px; border: 2px solid var(--neko-pink); display: flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 900; }
+        .coin-icon-huge { width: 32px; height: 32px; object-fit: contain; }
 
-        /* Karakter Alanı */
-        .neko-container { position: absolute; top: 45%; left: 50%; transform: translate(-50%, -50%); text-align: center; width: 100%; transition: all 0.5s ease; }
-        .main-neko-img { width: 260px; filter: drop-shadow(0 0 20px var(--neko-pink)); animation: float 3s infinite ease-in-out; transition: transform 0.3s; }
-        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
-        .upgrade-flash { animation: flash 0.5s; }
-        @keyframes flash { 0% { filter: brightness(1); } 50% { filter: brightness(3); transform: scale(1.1); } 100% { filter: brightness(1); } }
-
-        /* Ekranlar */
-        .screen { display: none; height: calc(100% - 170px); padding: 20px; box-sizing: border-box; background: rgba(0,0,0,0.85); backdrop-filter: blur(12px); overflow-y: auto; }
-        .active { display: block; animation: slideIn 0.3s; }
-        @keyframes slideIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* Yan Yana Shop & Envanter Kartları */
-        .grid-half { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
-        .card { background: rgba(255,255,255,0.07); border-radius: 15px; padding: 12px; border: 1px solid rgba(255,175,204,0.3); text-align: center; }
+        /* Sabit Karakter */
+        .neko-container { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; width: 100%; }
+        .main-neko-img { width: 280px; filter: drop-shadow(0 0 25px var(--neko-pink)); }
         
-        .btn { background: var(--heart-red); border: none; padding: 10px; border-radius: 15px; color: white; font-weight: bold; cursor: pointer; width: 100%; margin-top: 8px; font-size: 12px; }
-        .btn-upgrade { background: var(--gold); color: black; }
+        /* Ekranlar */
+        .screen { display: none; height: calc(100% - 185px); padding: 20px; box-sizing: border-box; background: rgba(0,0,0,0.85); backdrop-filter: blur(15px); overflow-y: auto; }
+        .active { display: block; }
+
+        /* Kartlar */
+        .card { background: rgba(255,255,255,0.08); border-radius: 20px; padding: 20px; margin-bottom: 15px; border: 1px solid var(--neko-pink); text-align: center; }
+        .btn { background: var(--heart-red); border: none; padding: 15px; border-radius: 20px; color: white; font-weight: bold; cursor: pointer; width: 100%; margin-top: 10px; font-size: 16px; }
+        .btn-upgrade { background: var(--gold); color: #000; }
 
         /* Alt Navigasyon */
-        .nav { position: absolute; bottom: 0; width: 100%; height: 85px; background: var(--wood); border-top: 4px solid #3d2610; display: flex; justify-content: space-around; align-items: center; }
-        .nav-btn { background: none; border: none; color: white; font-size: 11px; display: flex; flex-direction: column; align-items: center; gap: 5px; }
-        .nav-icon { width: 30px; height: 30px; filter: brightness(0) invert(1); }
-        .active-nav { color: var(--neko-pink); transform: scale(1.1); }
+        .nav { position: absolute; bottom: 0; width: 100%; height: 85px; background: var(--wood); border-top: 4px solid #2a180a; display: flex; justify-content: space-around; align-items: center; }
+        .nav-btn { background: none; border: none; color: #ccc; font-size: 11px; display: flex; flex-direction: column; align-items: center; gap: 5px; transition: 0.3s; }
+        .nav-icon { width: 32px; height: 32px; filter: brightness(0) invert(1); }
+        .active-nav { color: var(--neko-pink); transform: translateY(-5px); font-weight: bold; }
     </style>
 </head>
 <body>
 
+    <div id="notification-container"></div>
+
     <div id="loading-screen">
-        <h1 style="color: white; margin-bottom: 20px;">NEKO EMPIRE</h1>
-        <div class="bar-bg"><div class="bar-fill" id="load-bar"></div></div>
+        <div style="width:70%; height:15px; background:rgba(0,0,0,0.5); border-radius:10px; border:1px solid white; overflow:hidden;">
+            <div id="load-bar" style="width:0%; height:100%; background:var(--neko-pink);"></div>
+        </div>
     </div>
 
     <div id="app">
         <div class="header">
-            <div class="status">
-                <img src="heart.png" class="coin-icon-big"> <span id="ui-hearts">0</span><br>
-                <img src="neko.png" class="coin-icon-big"> <span id="ui-neko">0</span>
+            <div class="status-group">
+                <div class="status"><img src="heart.png" class="coin-icon-huge"> <span id="ui-hearts">0</span></div>
+                <div class="status"><img src="neko.png" class="coin-icon-huge"> <span id="ui-neko">0</span></div>
             </div>
-            <div class="status" style="text-align:right;">
-                <img src="silver.png" class="coin-icon-big"> <span id="ui-silver">500</span><br>
-                ⭐ LVL: <span id="ui-level">1</span>
+            <div class="status-group">
+                <div class="status"><img src="silver.png" class="coin-icon-huge"> <span id="ui-silver">500</span></div>
+                <div class="status" style="justify-content: center; font-size: 14px;">LEVEL <span id="ui-level" style="margin-left:5px;">1</span></div>
             </div>
         </div>
 
         <div id="scr-room" class="screen active" style="background:none;">
-            <div class="neko-container" id="neko-box">
+            <div class="neko-container">
                 <img src="pink_neko.png" id="main-img" class="main-neko-img">
                 <br>
-                <div style="background:rgba(0,0,0,0.6); padding:10px 25px; border-radius:25px; margin-top:15px; border:2px solid var(--neko-pink);">
-                    <b id="neko-name" style="font-size:18px;">Pink Neko</b>
+                <div style="background:rgba(0,0,0,0.7); padding:10px 25px; border-radius:25px; margin-top:20px; border:2px solid var(--neko-pink);">
+                    <b id="neko-name" style="font-size:22px; letter-spacing:1px;">PINK NEKO</b>
                 </div>
             </div>
         </div>
 
         <div id="scr-depo" class="screen">
-            <h2 align="center">💎 KALPLERİ DÖNÜŞTÜR</h2>
-            <div class="card" style="padding:40px 10px;">
-                <img src="heart.png" width="80"><br>
-                <h1 id="depo-hearts" style="font-size:50px; margin:10px 0;">0</h1>
-                <p>100 Kalp = 1 $NEKO</p>
-                <button class="btn" onclick="convertToNeko()" style="font-size:16px; padding:15px;">DÖNÜŞTÜR</button>
+            <h2 align="center">DÖNÜŞTÜRÜCÜ</h2>
+            <div class="card">
+                <img src="heart.png" width="100">
+                <h1 id="depo-hearts" style="font-size:55px; margin:15px 0; color:var(--heart-red);">0</h1>
+                <p>Minimum 500 Kalp = 5 $NEKO</p>
+                <button class="btn" onclick="convertToNeko()">$NEKO'YA ÇEVİR</button>
             </div>
         </div>
 
         <div id="scr-shop" class="screen">
-            <h2 align="center">🛍️ MARKET & ENVANTER</h2>
-            
-            <h3 style="color:var(--neko-pink)">Market (Yeni Neko Al)</h3>
-            <div class="grid-half">
-                <div class="card">
-                    <img src="white_neko.png" width="50"><br>
-                    <b>White Neko</b><br>
-                    <small>100 $NEKO</small>
-                    <button class="btn" onclick="buyNeko('White Neko', 'white_neko.png', 100, 150)">AL</button>
-                </div>
-                <div class="card">
-                    <img src="blue_neko.png" width="50"><br>
-                    <b>Blue Neko</b><br>
-                    <small>250 $NEKO</small>
-                    <button class="btn" onclick="buyNeko('Blue Neko', 'blue_neko.png', 250, 400)">AL</button>
-                </div>
-            </div>
-
-            <h3 style="color:var(--gold); margin-top:20px;">Envanter (Upgrade)</h3>
+            <h2 align="center">MARKET</h2>
             <div class="card">
-                <p>Mevcut Neko Seviyesi: <b id="inv-lvl">1</b></p>
-                <p>Üretim Hızı: <b id="inv-rate">50</b> 💖/saat</p>
-                <button class="btn btn-upgrade" onclick="upgradeNeko()">5 $NEKO İLE UPGRADE ET</button>
+                <img src="white_neko.png" width="80"><br>
+                <h3>WHITE NEKO</h3>
+                <p>150 💖 / Saat Üretim</p>
+                <button class="btn" onclick="buyNeko('White Neko', 'white_neko.png', 100, 150)">100 $NEKO SATIN AL</button>
+            </div>
+            <div class="card">
+                <img src="blue_neko.png" width="80"><br>
+                <h3>BLUE NEKO</h3>
+                <p>450 💖 / Saat Üretim</p>
+                <button class="btn" onclick="buyNeko('Blue Neko', 'blue_neko.png', 300, 450)">300 $NEKO SATIN AL</button>
+            </div>
+        </div>
+
+        <div id="scr-inv" class="screen">
+            <h2 align="center">ENVANTER & UPGRADE</h2>
+            <div class="card">
+                <h3 style="color:var(--gold)">KARAKTER GELİŞTİR</h3>
+                <p>Mevcut Seviye: <span id="inv-lvl">1</span></p>
+                <p>Mevcut Hız: <span id="inv-rate">50</span> 💖/s</p>
+                <hr style="border:0.5px solid rgba(255,255,255,0.1)">
+                <p>Upgrade Bedeli: 20 $NEKO</p>
+                <button class="btn btn-upgrade" onclick="upgradeNeko()">SEVİYE YÜKSELT (+25 Hız)</button>
             </div>
         </div>
 
         <nav class="nav">
             <button class="nav-btn active-nav" onclick="show('scr-room', this)">
-                <img src="https://cdn-icons-png.flaticon.com/512/25/25694.png" class="nav-icon">Oda
-            </button>
-            <button class="nav-btn" onclick="show('scr-depo', this)">
-                <img src="https://cdn-icons-png.flaticon.com/512/2897/2897832.png" class="nav-icon">Depo
+                <img src="https://cdn-icons-png.flaticon.com/512/25/25694.png" class="nav-icon">ODA
             </button>
             <button class="nav-btn" onclick="show('scr-shop', this)">
-                <img src="https://cdn-icons-png.flaticon.com/512/1170/1170678.png" class="nav-icon">Market
+                <img src="https://cdn-icons-png.flaticon.com/512/1170/1170678.png" class="nav-icon">MARKET
+            </button>
+            <button class="nav-btn" onclick="show('scr-inv', this)">
+                <img src="https://cdn-icons-png.flaticon.com/512/2897/2897832.png" class="nav-icon">ENVANTER
+            </button>
+            <button class="nav-btn" onclick="show('scr-depo', this)">
+                <img src="https://cdn-icons-png.flaticon.com/512/2769/2769339.png" class="nav-icon">DEPO
             </button>
         </nav>
     </div>
 
     <script>
-        let stats = { hearts: 0, nekoToken: 0, silver: 500, hourlyRate: 50, level: 1 };
+        let stats = { hearts: 0, nekoToken: 50, silver: 500, hourlyRate: 50, level: 1 };
 
-        // Üretim
+        function notify(msg) {
+            const container = document.getElementById('notification-container');
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.innerText = msg;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
         setInterval(() => {
             stats.hearts += (stats.hourlyRate / 3600);
             updateUI();
@@ -150,42 +171,41 @@
             document.getElementById('inv-rate').innerText = stats.hourlyRate;
         }
 
-        // Animasyonlu Upgrade (Envanterden)
-        function upgradeNeko() {
-            if (stats.nekoToken >= 5) {
-                stats.nekoToken -= 5;
-                stats.level++;
-                stats.hourlyRate += 20;
-                
-                // Animasyon tetikle
-                const img = document.getElementById('main-img');
-                img.classList.add('upgrade-flash');
-                setTimeout(() => img.classList.remove('upgrade-flash'), 500);
-                
-                updateUI();
-                alert("TEBRİKLER! Neko seviye atladı.");
-            } else { alert("Yetersiz $NEKO!"); }
-        }
-
         function convertToNeko() {
-            if (stats.hearts >= 100) {
+            if (stats.hearts >= 500) {
                 let gain = Math.floor(stats.hearts / 100);
                 stats.nekoToken += gain;
-                stats.hearts -= gain * 100;
+                stats.hearts -= (gain * 100);
+                notify("TEBRİKLER! " + gain + " $NEKO Kazandın.");
                 updateUI();
-            } else { alert("Dönüştürmek için 100 kalp lazım!"); }
+            } else {
+                notify("HATA: Minimum 500 Kalp Lazım!");
+            }
+        }
+
+        function upgradeNeko() {
+            if (stats.nekoToken >= 20) {
+                stats.nekoToken -= 20;
+                stats.level++;
+                stats.hourlyRate += 25;
+                notify("SİSTEM: Karakter Seviye Atladı!");
+                updateUI();
+            } else {
+                notify("HATA: Yetersiz $NEKO Token!");
+            }
         }
 
         function buyNeko(name, img, cost, rate) {
             if (stats.nekoToken >= cost) {
                 stats.nekoToken -= cost;
                 stats.hourlyRate = rate;
-                document.getElementById('neko-name').innerText = name;
+                document.getElementById('neko-name').innerText = name.toUpperCase();
                 document.getElementById('main-img').src = img;
-                stats.level = 1; 
+                notify(name + " Ekibe Katıldı!");
                 updateUI();
-                show('scr-room', document.querySelector('.nav-btn'));
-            } else { alert("Yetersiz $NEKO!"); }
+            } else {
+                notify("HATA: Bakiyen Yetersiz!");
+            }
         }
 
         function show(id, btn) {
@@ -195,7 +215,6 @@
             btn.classList.add('active-nav');
         }
 
-        // Loading
         let p = 0;
         let int = setInterval(() => {
             p += 5;
