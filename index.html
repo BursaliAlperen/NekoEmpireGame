@@ -3,219 +3,243 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>NekoEmpire Kawaii Edition</title>
+    <title>NekoEmpire: Pro Inventory</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         :root {
             --p-pink: #ffafcc;
             --p-red: #ff4d6d;
             --p-gold: #ffb703;
-            --glass: rgba(0, 0, 0, 0.8);
+            --glass: rgba(0, 0, 0, 0.9);
         }
 
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; font-family: 'Poppins', sans-serif; overflow: hidden; background: #000; color: white; }
 
-        /* Bildirimler */
-        #toast-container { position: fixed; top: 30px; left: 50%; transform: translateX(-50%); z-index: 9999; width: 85%; pointer-events: none; }
-        .toast { background: var(--glass); border-left: 5px solid var(--p-pink); padding: 15px; border-radius: 12px; margin-bottom: 10px; backdrop-filter: blur(10px); animation: slideIn 0.4s ease-out; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        /* Bildirim Toast */
+        #toast-container { position: fixed; top: 30px; left: 50%; transform: translateX(-50%); z-index: 10000; width: 85%; pointer-events: none; }
+        .toast { background: var(--glass); border-left: 5px solid var(--p-pink); padding: 15px; border-radius: 12px; margin-bottom: 10px; animation: slideIn 0.4s ease-out; font-size: 14px; text-align: center; }
         @keyframes slideIn { from { opacity: 0; transform: translateY(-50px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Arkaplan */
         #app { display: none; width: 100%; height: 100%; background: url('oda_bg.jpg') center/cover no-repeat; position: relative; }
         
-        /* Uçan Kalpler ve Yazılar */
-        #fx-layer { position: absolute; inset: 0; pointer-events: none; z-index: 5; }
-        .floating-heart { position: absolute; bottom: 25%; color: var(--p-red); animation: floatUp 3s linear forwards; font-size: 24px; }
-        .uwu-text { position: absolute; bottom: 55%; font-weight: bold; color: white; text-shadow: 0 0 10px var(--p-pink); animation: floatText 2s ease-out forwards; font-size: 22px; pointer-events: none; }
-        
-        @keyframes floatUp { to { transform: translateY(-500px) translateX(var(--rx)); opacity: 0; } }
-        @keyframes floatText { 0% { opacity: 0; transform: translateY(0) scale(0.5); } 20% { opacity: 1; transform: translateY(-20px) scale(1.2); } 100% { opacity: 0; transform: translateY(-80px) scale(1); } }
+        /* FX Layer */
+        #fx-layer { position: absolute; inset: 0; pointer-events: none; z-index: 50; }
+        .uwu-text { position: absolute; bottom: 50%; font-weight: 900; color: white; text-shadow: 0 0 10px var(--p-pink); animation: floatText 2s ease-out forwards; font-size: 26px; }
+        @keyframes floatText { 0% { opacity:0; transform:translateY(0); } 20% { opacity:1; } 100% { opacity:0; transform:translateY(-100px); } }
 
         /* Üst Panel */
         .header { display: flex; justify-content: space-between; padding: 15px; z-index: 100; position: relative; }
-        .stat { background: var(--glass); padding: 8px 12px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; gap: 8px; margin-bottom: 5px; backdrop-filter: blur(5px); }
-        .icon-big { width: 32px; height: 32px; object-fit: contain; }
+        .stat-card { background: var(--glass); padding: 8px 12px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+        .icon-v-big { width: 32px; height: 32px; object-fit: contain; }
 
-        /* Karakter (Neko) Animasyonlu */
+        /* Ana Sahne */
         .stage { position: absolute; top: 48%; left: 50%; transform: translate(-50%, -50%); text-align: center; width: 100%; z-index: 10; }
-        .neko-hero { 
-            width: 300px; 
-            filter: drop-shadow(0 0 25px var(--p-pink)); 
-            animation: breathe 4s infinite ease-in-out; 
-            transition: 0.2s; 
-            cursor: pointer;
-        }
-        .neko-hero:active { transform: scale(0.9); }
+        .neko-hero { width: 280px; filter: drop-shadow(0 0 20px var(--p-pink)); animation: breathe 4s infinite ease-in-out; }
+        @keyframes breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
         
-        @keyframes breathe {
-            0%, 100% { transform: scale(1); filter: drop-shadow(0 0 20px var(--p-pink)); }
-            50% { transform: scale(1.03); filter: drop-shadow(0 0 35px var(--p-pink)); }
+        /* Ekranlar */
+        .screen { display: none; height: calc(100% - 175px); padding: 20px; box-sizing: border-box; background: var(--glass); backdrop-filter: blur(25px); z-index: 1000; overflow-y: auto; }
+        .active { display: block; }
+
+        /* Kartlar & Butonlar */
+        .card { background: rgba(255,255,255,0.05); border-radius: 20px; padding: 15px; margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.1); text-align: center; }
+        .btn { background: var(--p-red); border: none; padding: 12px; border-radius: 15px; color: white; font-weight: bold; width: 100%; cursor: pointer; transition: 0.2s; }
+        .btn-gold { background: var(--p-gold); color: black; }
+        .btn-gray { background: #444; color: #ccc; }
+
+        /* Upgrade Frame (Popup) */
+        #upgrade-frame { 
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); 
+            z-index: 2000; flex-direction: column; align-items: center; justify-content: center; padding: 30px;
+            animation: fadeIn 0.3s;
         }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        .name-tag { background: white; color: #ff4d6d; padding: 5px 25px; border-radius: 20px; font-weight: bold; margin-top: 15px; display: inline-block; font-size: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
-
-        /* Menüler */
-        .screen { display: none; height: calc(100% - 175px); padding: 25px; box-sizing: border-box; background: var(--glass); backdrop-filter: blur(25px); z-index: 1000; overflow-y: auto; }
-        .active { display: block; animation: fadeIn 0.3s; }
-        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
-
-        .card { background: rgba(255,255,255,0.05); border-radius: 20px; padding: 15px; margin-bottom: 12px; border: 1px solid rgba(255,255,255,0.1); text-align: center; }
-        .btn { background: var(--p-red); border: none; padding: 15px; border-radius: 18px; color: white; font-weight: bold; width: 100%; font-size: 16px; transition: 0.2s; box-shadow: 0 4px 15px rgba(255,77,109,0.3); }
-        .btn-gold { background: var(--p-gold); color: black; box-shadow: 0 4px 15px rgba(255,183,3,0.3); }
-
-        /* Alt Navigasyon */
-        .navbar { position: absolute; bottom: 0; width: 100%; height: 90px; background: #000; display: flex; justify-content: space-around; align-items: center; border-top: 1px solid #333; z-index: 2000; }
-        .nav-item { background: none; border: none; color: #555; display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 11px; transition: 0.3s; }
-        .nav-icon { width: 30px; height: 30px; filter: grayscale(1); }
+        /* Navigasyon */
+        .navbar { position: absolute; bottom: 0; width: 100%; height: 90px; background: #000; display: flex; justify-content: space-around; align-items: center; border-top: 1px solid #222; z-index: 2000; }
+        .nav-item { background: none; border: none; color: #444; display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 10px; font-weight: bold; }
         .nav-active { color: var(--p-pink); }
-        .nav-active .nav-icon { filter: none; transform: translateY(-5px); }
-
-        /* Loader */
-        #loader { position: fixed; inset: 0; z-index: 10000; background: #000; display: flex; flex-direction: column; justify-content: center; align-items: center; }
-        .p-bar { width: 200px; height: 4px; background: #111; margin-top: 20px; border-radius: 2px; }
-        .p-fill { width: 0%; height: 100%; background: var(--p-pink); }
+        .nav-icon { width: 28px; height: 28px; filter: grayscale(1); }
+        .nav-active .nav-icon { filter: none; }
     </style>
 </head>
 <body>
 
     <div id="toast-container"></div>
 
-    <div id="loader">
-        <h1 style="letter-spacing: 4px; font-size: 20px;">NEKO EMPIRE</h1>
-        <div class="p-bar"><div class="p-fill" id="p-fill"></div></div>
+    <div id="upgrade-frame">
+        <h2 style="color:var(--p-gold)">UPGRADE MERKEZİ</h2>
+        <div class="card" style="width: 80%;">
+            <p id="up-target-name">Karakter</p>
+            <p>Seviye: <span id="up-lvl">1</span></p>
+            <p>Maliyet: <span id="up-cost">50</span> $NEKO</p>
+            <button class="btn btn-gold" onclick="confirmUpgrade()">GELİŞTİR</button>
+            <button class="btn btn-gray" style="margin-top:10px;" onclick="closeUpgrade()">KAPAT</button>
+        </div>
     </div>
 
     <div id="app">
         <div id="fx-layer"></div>
-
         <div class="header">
             <div>
-                <div class="stat"><img src="heart.png" class="icon-big"> <span id="v-hearts">0</span></div>
-                <div class="stat"><img src="neko.png" class="icon-big"> <span id="v-neko">0</span></div>
+                <div class="stat-card"><img src="heart.png" class="icon-v-big"> <span id="v-hearts">0</span></div>
+                <div class="stat-card"><img src="neko.png" class="icon-v-big"> <span id="v-neko">0</span></div>
             </div>
             <div style="text-align: right;">
-                <div class="stat"><img src="silver.png" class="icon-big"> <span id="v-silver">500</span></div>
-                <div style="font-size: 14px; color: var(--p-pink); font-weight: bold; margin-right: 10px;">LVL <span id="v-lvl">1</span></div>
+                <div class="stat-card"><img src="silver.png" class="icon-v-big"> <span id="v-silver">500</span></div>
+                <div style="font-size: 14px; font-weight: 900; color:var(--p-pink);">PRO EMPIRE</div>
             </div>
         </div>
 
         <div id="scr-home" class="screen active" style="background:none; backdrop-filter:none;">
             <div class="stage">
-                <img src="pink_neko.png" id="hero" class="neko-hero" onclick="nekoTap()">
+                <img src="pinky.png" id="hero-img" class="neko-hero">
                 <br>
-                <div class="name-tag" id="h-name">PINK NEKO</div>
+                <div style="background:white; color:var(--p-red); padding:5px 25px; border-radius:20px; font-weight:900; margin-top:15px; display:inline-block;" id="hero-name">PINKY</div>
             </div>
         </div>
 
-        <div id="scr-shop" class="screen">
-            <h2 align="center">NEKO MARKET</h2>
-            <div class="card"><img src="white_neko.png" width="60"><h3>White Neko</h3><button class="btn" onclick="buy('White Neko','white_neko.png',150,200)">150 $NEKO</button></div>
-            <div class="card"><img src="blue_neko.png" width="60"><h3>Blue Neko</h3><button class="btn" onclick="buy('Blue Neko','blue_neko.png',400,500)">400 $NEKO</button></div>
+        <div id="scr-market" class="screen">
+            <h2 align="center">MARKET</h2>
+            <div class="card" id="shop-snowy">
+                <img src="snowy.png" width="60"><h3>SNOWY</h3><p>Bedel: 300 $NEKO</p>
+                <button class="btn" onclick="buyNeko('Snowy','snowy.png',300)">SATIN AL</button>
+            </div>
+            <div class="card" id="shop-sky">
+                <img src="sky.png" width="60"><h3>SKY</h3><p>Bedel: 800 $NEKO</p>
+                <button class="btn" onclick="buyNeko('Sky','sky.png',800)">SATIN AL</button>
+            </div>
         </div>
 
         <div id="scr-inv" class="screen">
-            <h2 align="center">UPGRADE</h2>
-            <div class="card">
-                <h3>Karakter Seviyesi: <span id="i-lvl">1</span></h3>
-                <p>Üretim: <span id="i-rate">50</span> 💖/s</p>
-                <button class="btn btn-gold" onclick="upgrade()">UPGRADE (20 $NEKO)</button>
-            </div>
+            <h2 align="center">ENVANTER</h2>
+            <div id="inventory-list">
+                </div>
         </div>
 
         <div id="scr-depo" class="screen">
-            <h2 align="center">KALP DEPOSU</h2>
+            <h2 align="center">DÖNÜŞTÜR</h2>
             <div class="card">
                 <img src="heart.png" width="80"><h1 id="d-hearts">0</h1>
-                <p>Min. 500 Kalp</p>
+                <p>500 Kalp = 5 $NEKO</p>
                 <button class="btn" onclick="convert()">DÖNÜŞTÜR</button>
             </div>
         </div>
 
         <nav class="navbar">
             <button class="nav-item nav-active" onclick="tab('scr-home', this)"><img src="https://cdn-icons-png.flaticon.com/512/25/25694.png" class="nav-icon">ODA</button>
-            <button class="nav-item" onclick="tab('scr-shop', this)"><img src="https://cdn-icons-png.flaticon.com/512/1170/1170678.png" class="nav-icon">MARKET</button>
+            <button class="nav-item" onclick="tab('scr-market', this)"><img src="https://cdn-icons-png.flaticon.com/512/1170/1170678.png" class="nav-icon">MARKET</button>
             <button class="nav-item" onclick="tab('scr-inv', this)"><img src="https://cdn-icons-png.flaticon.com/512/2897/2897832.png" class="nav-icon">ENVANTER</button>
             <button class="nav-item" onclick="tab('scr-depo', this)"><img src="https://cdn-icons-png.flaticon.com/512/2769/2769339.png" class="nav-icon">DEPO</button>
         </nav>
     </div>
 
     <script>
-        let d = { h: 0, n: 50, s: 500, r: 50, l: 1 };
-        const words = ["Cute!", "UwU", "Nyaa~", "Kawaii!", "Love!", "Soft!", "Meow!"];
+        let d = { hearts: 0, neko: 0, silver: 500 };
+        let currentEquipped = "Pinky";
+        
+        // Nekoların Datası
+        let nekos = {
+            "Pinky": { owned: true, img: "pinky.png", lvl: 1, rate: 30 },
+            "Snowy": { owned: false, img: "snowy.png", lvl: 1, rate: 120 },
+            "Sky": { owned: false, img: "sky.png", lvl: 1, rate: 400 }
+        };
 
         function toast(m) {
-            const c = document.getElementById('toast-container');
-            const t = document.createElement('div');
-            t.className = 'toast'; t.innerText = m;
-            c.appendChild(t);
+            const t = document.createElement('div'); t.className = 'toast'; t.innerText = m;
+            document.getElementById('toast-container').appendChild(t);
             setTimeout(() => t.remove(), 2500);
         }
 
-        // Karakter Tıklama ve Efektler
-        function nekoTap() {
-            spawnText();
-            spawnHeart();
-        }
-
-        function spawnText() {
-            const fx = document.getElementById('fx-layer');
-            const t = document.createElement('div');
-            t.className = 'uwu-text';
-            t.innerText = words[Math.floor(Math.random() * words.length)];
-            t.style.left = (40 + Math.random() * 20) + '%';
-            fx.appendChild(t);
-            setTimeout(() => t.remove(), 2000);
-        }
-
-        function spawnHeart() {
-            const fx = document.getElementById('fx-layer');
-            const h = document.createElement('div');
-            h.className = 'floating-heart';
-            h.innerHTML = '💖';
-            h.style.left = (45 + Math.random() * 10) + '%';
-            h.style.setProperty('--rx', (Math.random() * 100 - 50) + 'px');
-            fx.appendChild(h);
-            setTimeout(() => h.remove(), 3000);
-        }
-
-        // Otomatik Döngü
+        // Oyun Döngüsü
         setInterval(() => {
-            d.h += (d.r / 3600);
-            update();
-            if(Math.random() > 0.8) spawnHeart(); // Rastgele kalpler
+            let activeRate = nekos[currentEquipped] ? nekos[currentEquipped].rate : 0;
+            d.hearts += (activeRate / 3600);
+            updateUI();
         }, 1000);
 
-        function update() {
-            document.getElementById('v-hearts').innerText = Math.floor(d.h);
-            document.getElementById('d-hearts').innerText = Math.floor(d.h);
-            document.getElementById('v-neko').innerText = d.n;
-            document.getElementById('v-silver').innerText = d.s;
-            document.getElementById('v-lvl').innerText = d.l;
-            document.getElementById('i-lvl').innerText = d.l;
-            document.getElementById('i-rate').innerText = d.r;
+        function updateUI() {
+            document.getElementById('v-hearts').innerText = Math.floor(d.hearts);
+            document.getElementById('d-hearts').innerText = Math.floor(d.hearts);
+            document.getElementById('v-neko').innerText = d.neko;
+            document.getElementById('v-silver').innerText = d.silver;
         }
 
-        function convert() {
-            if(d.h >= 500) {
-                let gain = Math.floor(d.h / 100);
-                d.n += gain; d.h -= gain*100;
-                toast(gain + " $NEKO Kazandın!"); update();
-            } else { toast("En az 500 kalp lazım!"); }
+        // Envanter Mantığı
+        function renderInventory() {
+            const list = document.getElementById('inventory-list');
+            list.innerHTML = "";
+            for (let name in nekos) {
+                if (nekos[name].owned) {
+                    let isEquipped = (currentEquipped === name);
+                    list.innerHTML += `
+                        <div class="card">
+                            <img src="${nekos[name].img}" width="50">
+                            <h3>${name} (LVL ${nekos[name].lvl})</h3>
+                            <button class="btn ${isEquipped?'btn-gray':''}" onclick="equip('${name}')">
+                                ${isEquipped ? 'EQUIPPED' : 'EQUIP'}
+                            </button>
+                            <button class="btn btn-gold" style="margin-top:5px" onclick="openUpgrade('${name}')">UPGRADE</button>
+                        </div>
+                    `;
+                }
+            }
         }
 
-        function upgrade() {
-            if(d.n >= 20) {
-                d.n -= 20; d.l++; d.r += 25;
-                toast("Level Atladın! UwU"); update();
+        function equip(name) {
+            currentEquipped = name;
+            document.getElementById('hero-img').src = nekos[name].img;
+            document.getElementById('hero-name').innerText = name.toUpperCase();
+            toast(name + " Kuşanıldı! UwU");
+            renderInventory();
+        }
+
+        // Upgrade Frame Mantığı
+        let upgradingNeko = "";
+        function openUpgrade(name) {
+            upgradingNeko = name;
+            document.getElementById('up-target-name').innerText = name;
+            document.getElementById('up-lvl').innerText = nekos[name].lvl;
+            document.getElementById('up-cost').innerText = nekos[name].lvl * 50;
+            document.getElementById('upgrade-frame').style.display = "flex";
+        }
+
+        function closeUpgrade() { document.getElementById('upgrade-frame').style.display = "none"; }
+
+        function confirmUpgrade() {
+            let cost = nekos[upgradingNeko].lvl * 50;
+            if (d.neko >= cost) {
+                d.neko -= cost;
+                nekos[upgradingNeko].lvl++;
+                nekos[upgradingNeko].rate += 20;
+                toast("LEVEL UP! Nyaa~");
+                // Efekt
+                const fx = document.getElementById('fx-layer');
+                const t = document.createElement('div'); t.className='uwu-text'; t.innerText="Nyaa LEVEL UP!"; t.style.left="30%"; fx.appendChild(t);
+                setTimeout(()=>t.remove(), 2000);
+                
+                closeUpgrade();
+                renderInventory();
+                updateUI();
             } else { toast("Yetersiz $NEKO!"); }
         }
 
-        function buy(n, i, c, r) {
-            if(d.n >= c) {
-                d.n -= c; d.r = r;
-                document.getElementById('h-name').innerText = n.toUpperCase();
-                document.getElementById('hero').src = i;
-                toast(n + " alındı!"); update();
-            } else { toast("Bakiye yetersiz!"); }
+        function buyNeko(name, img, cost) {
+            if (d.neko >= cost) {
+                d.neko -= cost;
+                nekos[name].owned = true;
+                toast(name + " Alındı!");
+                updateUI();
+                renderInventory();
+            } else { toast("Yetersiz $NEKO!"); }
+        }
+
+        function convert() {
+            if (d.hearts >= 500) {
+                let gain = Math.floor(d.hearts / 100);
+                d.neko += gain; d.hearts -= gain * 100;
+                toast(gain + " $NEKO eklendi!");
+            } else { toast("En az 500 kalp lazım!"); }
         }
 
         function tab(id, b) {
@@ -223,13 +247,15 @@
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('nav-active'));
             document.getElementById(id).classList.add('active');
             b.classList.add('nav-active');
+            if(id === 'scr-inv') renderInventory();
         }
 
+        // Loader
         let p = 0;
         let l = setInterval(() => {
-            p += 5; document.getElementById('p-fill').style.width = p + '%';
-            if(p >= 100) { clearInterval(l); document.getElementById('loader').style.display='none'; document.getElementById('app').style.display='block'; }
-        }, 40);
+            p += 4; document.getElementById('p-fill').style.width = p + '%';
+            if(p >= 100) { clearInterval(l); document.getElementById('app').style.display='block'; }
+        }, 30);
     </script>
 </body>
 </html>
