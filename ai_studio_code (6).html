@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>NEKOTOKYO: LIFE MASTER v11</title>
+    <style>
+        /* ==========================================
+           🎨 COLOR PALETTE & GLOBAL SETTINGS
+           ========================================== */
+        :root {
+            --bg-color: #050505; --room-floor: #9ba885; --wood-dark: #4a3022; --wood-light: #a37856;
+            --accent-blue: #7ba6b8; --accent-pink: #e8a0b3; --skin-tone: #ffdfce; --hair-color: #453c48;
+            --text-dark: #2a2a2a; --clothes-base: #f7f7f7; --sky-color: #87CEEB; --ambient-light: rgba(0, 0, 50, 0);
+        }
+
+        * { box-sizing: border-box; user-select: none; margin: 0; padding: 0; font-family: -apple-system, sans-serif; }
+        body { background-color: var(--bg-color); display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+
+        #game-wrapper {
+            width: 100%; max-width: 1024px; height: 100%; max-height: 800px;
+            position: relative; background: #000; box-shadow: 0 0 50px rgba(0,0,0,0.8); display: flex; flex-direction: column; overflow: hidden;
+        }
+
+        #lighting-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--ambient-light); pointer-events: none; z-index: 45; transition: background 2s; }
+        .ic { width: 16px; height: 16px; vertical-align: middle; fill: currentColor; display: inline-block; }
+
+        /* ZEMİN GÖLGESİ (Havada Uçmayı Önler) */
+        .ground-shadow { position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); width: 90%; height: 16px; background: rgba(0,0,0,0.25); border-radius: 50%; z-index: 1; pointer-events: none;}
+
+        /* ==========================================
+           🏠 SCENES & ENVIRONMENT
+           ========================================== */
+        .scene { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; }
+        .scene.active { display: block; }
+        .wall { position: absolute; top: 0; width: 100%; height: 65%; background-color: #f2efe9; border-bottom: 12px solid var(--wood-dark); z-index: 1; transition: background 0.5s ease;}
+        .floor { position: absolute; bottom: 0; width: 100%; height: 35%; background: var(--room-floor); z-index: 2; box-shadow: inset 0 30px 40px rgba(0,0,0,0.08); }
+
+        .window { position: absolute; top: 12%; right: 40%; width: 110px; height: 130px; background: var(--sky-color); border: 8px solid var(--wood-light); border-radius: 4px; z-index: 2; transition: background 2s; overflow: hidden; box-shadow: inset 0 0 20px rgba(0,0,0,0.2);}
+        .window::before { content: ''; position: absolute; top: 50%; width: 100%; height: 4px; background: var(--wood-light); z-index: 5;}
+        .window::after { content: ''; position: absolute; left: 50%; width: 4px; height: 100%; background: var(--wood-light); z-index: 5;}
+        
+        .cloud { position: absolute; background: rgba(255,255,255,0.8); border-radius: 20px; animation: floatClouds linear infinite;}
+        .cloud::before, .cloud::after { content:''; position:absolute; background: rgba(255,255,255,0.8); border-radius: 50%; }
+        @keyframes floatClouds { from { left: -50px; } to { left: 100%; } }
+
+        .win-plant { position: absolute; bottom: -2px; left: 10px; width: 25px; height: 35px; z-index: 6;}
+        .win-plant .pl-pot { width: 15px; height: 10px; background: #c0392b; bottom: 0; position: absolute; border-radius: 2px;}
+        .win-plant .pl-leaf { width: 12px; height: 12px; background: #27ae60; position: absolute; border-radius: 50% 0;}
+
+        /* Banyo Odası */
+        #scene-wc .wall { background: #dcedf2; background-image: linear-gradient(#fff 2px, transparent 2px), linear-gradient(90deg, #fff 2px, transparent 2px); background-size: 40px 40px; border-bottom: 15px solid #555;}
+        #scene-wc .floor { background: #888; background-image: linear-gradient(#999 2px, transparent 2px), linear-gradient(90deg, #999 2px, transparent 2px); background-size: 30px 30px;}
+        #scene-wc .rug { position: absolute; bottom: 20%; left: 40%; width: 80px; height: 30px; background: #3498db; border-radius: 10px; opacity: 0.8; z-index: 3; }
+
+        /* Bahçe Odası */
+        #scene-garden .wall { background: var(--sky-color); background-image: none; border-bottom: none; transition: background 2s; overflow: hidden; }
+        #scene-garden .floor { background: #5c8b3b; height: 30%; border-top: 8px solid #3e6324;}
+        
+        .road { position: absolute; bottom: 30%; width: 100%; height: 60px; background: #34495e; z-index: 1; border-top: 2px solid #7f8c8d; border-bottom: 2px solid #7f8c8d;}
+        .crosswalk { position: absolute; left: 40%; top: 0; width: 80px; height: 100%; background: repeating-linear-gradient(90deg, #fff 0px, #fff 8px, transparent 8px, transparent 16px); }
+        .car { position: absolute; bottom: 10px; width: 60px; height: 25px; background: #e74c3c; border-radius: 8px 12px 4px 4px; border: 2px solid #222; animation: drive 6s linear infinite; z-index: 2;}
+        .car::after { content:''; position:absolute; top: 4px; right: 8px; width: 15px; height: 10px; background: #87CEEB; border-radius: 2px;}
+        @keyframes drive { from { left: -100px; } to { left: 110%; } }
+
+        .fence-row { position: absolute; bottom: 30%; width: 100%; height: 35px; background: repeating-linear-gradient(90deg, #d35400 0px, #d35400 10px, transparent 10px, transparent 20px); border-bottom: 5px solid #a04000; z-index: 3;}
+        .garden-flower { position: absolute; bottom: 25%; width: 15px; height: 15px; background: #f1c40f; border-radius: 50%; border: 3px solid #e67e22; z-index: 4;}
+        .garden-flower::after { content:''; position:absolute; bottom:-10px; left:3px; width:4px; height:10px; background:#27ae60;}
+
+        /* Dev Ağaç & Yapraklar */
+        .css-tree { position: absolute; bottom: 25%; left: 5%; width: 120px; height: 300px; z-index: 4; transform-origin: bottom center; }
+        .tree-trunk { position: absolute; bottom: 0; left: 45px; width: 30px; height: 100px; background: #5c3a21; border: 2px solid var(--text-dark); border-radius: 4px;}
+        .tree-leaf-1 { position: absolute; top: 40px; left: -30px; width: 120px; height: 120px; background: #2ecc71; border: 3px solid var(--text-dark); border-radius: 50%; box-shadow: inset -10px -10px 0 rgba(0,0,0,0.2);}
+        .tree-leaf-2 { position: absolute; top: -10px; left: 30px; width: 140px; height: 140px; background: #27ae60; border: 3px solid var(--text-dark); border-radius: 50%; box-shadow: inset -10px -10px 0 rgba(0,0,0,0.2);}
+        .falling-leaf { position: absolute; width: 10px; height: 10px; background: #2ecc71; border-radius: 0 50% 0 50%; animation: fall 4s linear infinite; z-index: 5; opacity: 0;}
+        @keyframes fall { 0% { transform: translate(0, 0) rotate(0deg); opacity: 1; } 100% { transform: translate(50px, 150px) rotate(360deg); opacity: 0; } }
+
+        /* ==========================================
+           🛋️ FURNITURE & DOORS (Boşluklar Kapatıldı)
+           ========================================== */
+        .furniture { position: absolute; z-index: 5; transition: all 0.3s; }
+        
+        /* Kapılar Duvara Sıfırlandı (Z-Index: 3) */
+        .door-frame { position: absolute; bottom: 35%; width: 65px; height: 120px; border: 4px solid var(--wood-dark); background: #fff; z-index: 3; cursor: pointer; display: flex; justify-content: center; align-items: center; box-shadow: inset 4px 4px 10px rgba(0,0,0,0.1); transition: transform 0.1s;}
+        .door-frame:active { transform: scale(0.95); }
+        .door-sign { font-size: 11px; font-weight: bold; background: var(--text-dark); color: #fff; padding: 3px 8px; border-radius: 6px; position: absolute; top: 12px;}
+        #door-wc { left: 33%; } #door-garden { left: 45%; } 
+
+        /* YAPIŞIK 2.5D MUTFAK (0 Boşluk) */
+        #kitchen { left: 5px; bottom: 32%; width: 140px; height: 130px; z-index: 7; cursor: pointer;}
+        #kitchen:hover .kit-fridge { filter: brightness(1.1); } #kitchen:active { transform: scale(0.98); }
+        .kit-base { position: absolute; bottom: 0; left: 0; width: 130px; height: 50px; background: #d5d5d5; border: 2px solid var(--text-dark); z-index: 3;}
+        .kit-top { position: absolute; bottom: 48px; left: -1px; width: 132px; height: 22px; background: #b5b5b5; border: 2px solid var(--text-dark); border-bottom: none; transform: skewX(-45deg); transform-origin: bottom left; z-index: 4; }
+        .kit-side { position: absolute; bottom: 0; left: 128px; width: 22px; height: 50px; background: #aaa; border: 2px solid var(--text-dark); border-left: none; transform: skewY(-45deg); transform-origin: bottom left; z-index: 2;}
+        
+        .kit-fridge { position: absolute; bottom: 48px; left: -1px; width: 46px; height: 72px; background: #eee; border: 2px solid var(--text-dark); z-index: 5; border-bottom: none;}
+        .kit-fridge-top { position: absolute; bottom: 120px; left: -1px; width: 46px; height: 22px; background: #ddd; border: 2px solid var(--text-dark); transform: skewX(-45deg); transform-origin: bottom left; z-index: 6;}
+        .kit-fridge-side { position: absolute; bottom: 48px; left: 43px; width: 22px; height: 72px; background: #ccc; border: 2px solid var(--text-dark); border-left:none; border-bottom:none; transform: skewY(-45deg); transform-origin: bottom left; z-index: 4;}
+        
+        .stove-burner { position: absolute; width: 16px; height: 8px; background: #222; border: 2px solid #111; border-radius: 50%; opacity: 0; bottom: 6px;}
+        .sink-hole { position: absolute; bottom: 4px; right: 10px; width: 25px; height: 12px; background: #777; border: 2px solid #444; border-radius: 4px; opacity: 1;}
+        .kit-hood { position: absolute; top: -5px; left: 55px; width: 50px; height: 20px; background: #ddd; border: 2px solid var(--text-dark); opacity: 0; border-radius: 4px; z-index: 5;}
+        
+        #kitchen[data-level="2"] .stove-burner { opacity: 1; }
+        #kitchen[data-level="2"] .kit-top { background: #666; }
+        #kitchen[data-level="2"] .kit-hood { opacity: 1; }
+
+        /* PC MASASI (Tıklanabilir Oyun Alanı) */
+        #desk { left: 18%; bottom: 33%; width: 70px; height: 60px; z-index: 6; display: none; cursor: pointer; }
+        #desk:active { transform: scale(0.95); }
+        .desk-top { position: absolute; bottom: 28px; left: -1px; width: 72px; height: 10px; background: var(--wood-light); border: 2px solid var(--text-dark); border-radius: 4px; z-index: 3;}
+        .desk-leg { position: absolute; bottom: 0; width: 6px; height: 30px; background: var(--wood-dark); border: 2px solid var(--text-dark); z-index: 2;}
+        .desk-leg.l { left: 5px; } .desk-leg.r { right: 5px; }
+        .desk-pc { position: absolute; bottom: 38px; left: 15px; width: 40px; height: 25px; background: #111; border: 2px solid #555; border-radius: 4px; z-index: 4; transition: 0.3s;}
+        .desk-pc::after { content:''; position:absolute; top:2px; left:2px; right:2px; bottom:2px; background: #0984e3; border-radius: 2px; transition: 0.3s;}
+        #desk.playing .desk-pc::after { background: #e74c3c; animation: blink 0.2s infinite; }
+        #desk[data-level="1"] { display: block; }
+
+        /* YATAK (İnce Yorgan & Tam Başlık) */
+        #bed { right: 5px; bottom: 33%; width: 130px; height: 60px; z-index: 4; }
+        .bed-headboard { position: absolute; bottom: 0; right: -2px; width: 12px; height: 65px; background: var(--wood-dark); border: 2px solid var(--text-dark); border-radius: 4px 4px 0 0; z-index: 1;}
+        .bed-frame { position: absolute; bottom: 0; right: 8px; width: 122px; height: 20px; background: var(--wood-light); border: 2px solid var(--text-dark); border-radius: 4px 0 0 4px; border-right:none; z-index: 2;}
+        .bed-pillow { position: absolute; bottom: 20px; right: 10px; width: 60px; height: 24px; background: #fff; border: 2px solid var(--text-dark); border-radius: 12px; z-index: 3; box-shadow: inset -3px -3px 0 rgba(0,0,0,0.1);}
+        .bed-blanket { position: absolute; bottom: 20px; left: -2px; width: 90px; height: 12px; background: var(--accent-pink); border: 2px solid var(--text-dark); border-radius: 8px 0 0 0; border-right:none; z-index: 10;}
+        #bed[data-level="2"] .bed-frame { height: 25px; background: var(--wood-dark); }
+        #bed[data-level="2"] .bed-blanket { bottom: 25px; background: var(--accent-blue); height: 14px; }
+        #bed[data-level="2"] .bed-pillow { bottom: 25px; width: 70px;}
+        #bed[data-level="2"] .bed-headboard { height: 75px; background: #3e2b21; }
+
+        /* TV (Tıklanabilir) */
+        #tv { left: 62%; bottom: 33%; width: 40px; height: 70px; z-index: 6; cursor: pointer;}
+        #tv:active { transform: scale(0.95); }
+        .tv-stand { position: absolute; bottom: 0; width: 100%; height: 40px; background: var(--wood-dark); border: 2px solid var(--text-dark); border-radius: 4px;}
+        .tv-screen { position: absolute; bottom: 40px; left: -10px; width: 60px; height: 40px; background: #111; border: 3px solid #333; border-radius: 8px; transition: all 0.3s;}
+        #tv.watching .tv-screen { background: #87CEEB; box-shadow: 0 0 15px rgba(135,206,235,0.5); }
+        #tv[data-level="2"] .tv-screen { width: 80px; height: 50px; left: -20px; border-color: #222; }
+
+        #rug { left: 50%; transform: translateX(-50%); bottom: 5%; width: 400px; height: 110px; background: #e6dfd3; border: 4px dashed #c0b5a3; border-radius: 50%; z-index: 3; }
+        
+        #table { left: 50%; transform: translateX(-50%); bottom: 15%; width: 80px; height: 35px; z-index: 7; }
+        .tb-mat { position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); width: 100px; height: 15px; background: var(--accent-pink); border: 2px solid var(--text-dark); border-radius: 50%; z-index: 2; box-shadow: inset 0 -3px 0 rgba(0,0,0,0.1);}
+        .tb-leg { position: absolute; top: 10px; width: 8px; height: 25px; background: var(--wood-dark); border: 2px solid var(--text-dark); z-index: 3; }
+        .tb-leg.l { left: 10px; } .tb-leg.r { right: 10px; }
+        .tb-top { position: absolute; top: 0; left: 0; width: 100%; height: 12px; background: var(--wood-light); border: 2px solid var(--text-dark); border-radius: 6px; z-index: 8; box-shadow: inset 0 -3px 0 rgba(0,0,0,0.2);}
+        
+        #dirty-plate { position: absolute; top: -10px; left: 20px; width: 25px; height: 12px; background: #eee; border: 2px solid var(--text-dark); border-radius: 50%; z-index: 15; display: none;}
+        #dirty-plate::after { content:''; position:absolute; top:2px; left:5px; width:10px; height:5px; background: #8b4513; border-radius: 50%; opacity: 0.6;} 
+
+        /* WC & Bahçe Etkileşimleri */
+        .sink { position: absolute; left: 15%; bottom: 30%; width: 50px; height: 60px; background: #fff; border: 2px solid var(--text-dark); border-radius: 5px 5px 0 0; z-index: 5; cursor: pointer;}
+        .sink:active { transform: scale(0.95); }
+        .mirror { position: absolute; left: 15%; bottom: 50%; width: 50px; height: 40px; background: #cceeff; border: 3px solid var(--wood-light); border-radius: 5px; opacity: 0; transition: opacity 0.3s; z-index: 4; }
+        .shower-cabin { position: absolute; right: 10%; bottom: 30%; width: 140px; height: 200px; border: 4px solid #aaa; background: rgba(150,200,255,0.2); z-index: 4; transition: opacity 0.3s; }
+        .shower-head { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); width: 30px; height: 10px; background: #777;}
+        .water-drops { position: absolute; top: 20px; left: 0; width: 100%; height: 100%; background: repeating-linear-gradient(0deg, transparent, transparent 10px, rgba(255,255,255,0.6) 10px, rgba(255,255,255,0.6) 20px); opacity: 0; z-index: 15;}
+        .bathtub { position: absolute; right: 8%; bottom: 30%; width: 150px; height: 45px; background: #fff; border: 3px solid var(--text-dark); border-radius: 5px 5px 30px 30px; opacity: 0; z-index: 6; transition: opacity 0.3s; }
+        #scene-wc[data-mirror="1"] .mirror { opacity: 1; }
+        #scene-wc[data-tub="1"] .shower-cabin { border-color: transparent; background: transparent; box-shadow: none; }
+        #scene-wc[data-tub="1"] .bathtub { opacity: 1; }
+
+        .bench { position: absolute; bottom: 35%; right: 20%; width: 80px; height: 40px; background: var(--wood-dark); border: 2px solid var(--text-dark); border-radius: 5px; opacity: 0; z-index: 3; transition: opacity 0.3s; cursor: pointer;}
+        #scene-garden[data-bench="1"] .bench { opacity: 1; }
+
+        /* ==========================================
+           🐈‍⬛ CHARACTER RIG (SMART Z-INDEX)
+           ========================================== */
+        /* Normalde z-index 30, her şeyin önünde */
+        .character { position: absolute; bottom: 25%; left: 45%; width: 60px; height: 100px; z-index: 30; transition: left 1.5s ease-in-out, bottom 1.5s ease-in-out; }
+        .char-shadow { position: absolute; bottom: 0; left: 10px; width: 40px; height: 8px; background: rgba(0,0,0,0.4); border-radius: 50%; z-index: 1; transition: all 0.3s;}
+        
+        .char-scaler { width: 100%; height: 100%; transform-origin: bottom center; transition: transform 0.4s ease-in-out; transform-style: preserve-3d; }
+        .rig-part { width: 100%; height: 100%; position: absolute; z-index: 2; transform-origin: bottom center; transition: transform 0.5s ease; }
+        
+        .head-group { position: absolute; top: 0; left: 5px; width: 50px; height: 50px; z-index: 10; transition: transform 0.3s; }
+        .hair-back { position: absolute; top: 0; left: 0; width: 100%; height: 55px; background: var(--hair-color); border-radius: 25px; border: 2px solid var(--text-dark); z-index: 1; box-shadow: inset -3px -3px 0 rgba(0,0,0,0.2);}
+        .ear { position: absolute; top: -10px; width: 16px; height: 20px; background: var(--hair-color); border: 2px solid var(--text-dark); z-index: 1; transform-origin: bottom center;}
+        .ear::after { content:''; position:absolute; bottom:2px; left:2px; width:8px; height:10px; background:var(--accent-pink); border-radius:5px 10px 5px 5px; opacity:0.8;}
+        .ear.l { left: 4px; border-radius: 5px 15px 5px 5px; transform: rotate(-15deg); } .ear.r { right: 4px; border-radius: 15px 5px 5px 5px; transform: rotate(15deg); }
+        .face-base { position: absolute; top: 10px; left: 5px; width: 40px; height: 35px; background: var(--skin-tone); border-radius: 15px 15px 20px 20px; border: 2px solid var(--text-dark); z-index: 2; box-shadow: inset -2px -2px 0 rgba(0,0,0,0.1);}
+        .eye { position: absolute; top: 15px; width: 6px; height: 10px; background: var(--text-dark); border-radius: 50%; } .eye.l { left: 8px; } .eye.r { right: 8px; }
+        .mouth { position: absolute; top: 25px; left: 17px; width: 6px; height: 3px; border-bottom: 2px solid var(--text-dark); border-radius: 50%; transition: all 0.2s;}
+        .hair-front { position: absolute; top: -2px; left: 2px; width: 46px; height: 20px; background: var(--hair-color); border-radius: 20px 20px 5px 5px; z-index: 3; }
+
+        .body-group { position: absolute; top: 45px; left: 15px; width: 30px; height: 55px; z-index: 5; transition: transform 0.3s;}
+        .torso { position: absolute; top: 0; left: 0; width: 30px; height: 25px; background: var(--clothes-base); border: 2px solid var(--text-dark); border-radius: 8px 8px 4px 4px; z-index: 4; box-shadow: inset -2px -2px 0 rgba(0,0,0,0.1);}
+        .torso::before { content:''; position:absolute; top:2px; left:12px; width:6px; height:8px; background:#e74c3c; border-radius:3px; z-index:5;} 
+        .skirt { position: absolute; top: 20px; left: -2px; width: 34px; height: 15px; background: var(--accent-blue); border: 2px solid var(--text-dark); border-radius: 3px 3px 6px 6px; z-index: 3; box-shadow: inset -2px -2px 0 rgba(0,0,0,0.2);}
+        
+        .leg { position: absolute; top: 32px; width: 10px; height: 22px; background: var(--skin-tone); border: 2px solid var(--text-dark); border-radius: 5px; z-index: 2; transition: transform 0.3s, height 0.3s; transform-origin: top center; overflow: hidden;}
+        .leg::after { content:''; position:absolute; bottom:0; left:0; width:100%; height:12px; background:#fff; border-top: 2px solid var(--accent-pink); }
+        .leg.l { left: 3px; } .leg.r { right: 3px; }
+        
+        .arm { position: absolute; top: 5px; width: 10px; height: 25px; background: var(--skin-tone); border: 2px solid var(--text-dark); border-radius: 5px; z-index: 6; transform-origin: top center; transition: transform 0.3s;}
+        .arm::before { content:''; position:absolute; top:0; left:0; width:100%; height:10px; background:var(--clothes-base); border-bottom: 2px solid var(--text-dark);} 
+        .arm::after { content:''; position:absolute; bottom:-4px; left:0px; width:6px; height:6px; background:var(--skin-tone); border: 2px solid var(--text-dark); border-radius:50%;} 
+        .arm.l { left: -5px; transform: rotate(15deg); } .arm.r { right: -5px; transform: rotate(-15deg); }
+        
+        .tail { position: absolute; top: 15px; left: 10px; width: 8px; height: 35px; background: var(--hair-color); border: 2px solid var(--text-dark); border-radius: 10px; z-index: 1; transform-origin: top center; }
+        .zzzs { position: absolute; top: -20px; right: -20px; font-weight: 900; color: white; opacity: 0; font-size: 16px; text-shadow: 2px 2px 0 #333; z-index: 20;}
+
+        @keyframes zzz-anim { 0% { opacity: 0; transform: translate(0, 0) scale(0.5); } 50% { opacity: 1; transform: translate(10px, -20px) scale(1); } 100% { opacity: 0; transform: translate(20px, -40px) scale(1.2); } }
+        @keyframes breathe { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(1.02) translateY(-2px); } }
+        @keyframes blink { 0%, 96%, 100% { transform: scaleY(1); } 98% { transform: scaleY(0.1); } }
+        @keyframes tailWag { 0%, 100% { transform: rotate(20deg); } 50% { transform: rotate(-10deg); } }
+        @keyframes washArm { 0%, 100% { transform: rotate(15deg) translateY(0); } 50% { transform: rotate(45deg) translateY(-5px); } }
+        @keyframes typeArm { 0%, 100% { transform: rotate(45deg) translateY(-2px); } 50% { transform: rotate(55deg) translateY(-4px); } }
+        @keyframes eatMouth { 0%, 100% { height: 3px; border-radius: 50%; } 50% { height: 6px; border-radius: 0; background: #444;} }
+        @keyframes walk-leg-l { 0%, 100% { transform: rotate(0deg); } 25% { transform: rotate(25deg); } 75% { transform: rotate(-25deg); } }
+        @keyframes walk-leg-r { 0%, 100% { transform: rotate(0deg); } 25% { transform: rotate(-25deg); } 75% { transform: rotate(25deg); } }
+        @keyframes walk-arm-l { 0%, 100% { transform: rotate(15deg); } 25% { transform: rotate(-10deg); } 75% { transform: rotate(40deg); } }
+        @keyframes walk-arm-r { 0%, 100% { transform: rotate(-15deg); } 25% { transform: rotate(10deg); } 75% { transform: rotate(-40deg); } }
+        @keyframes walk-bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+
+        .state-walk .leg.l { animation: walk-leg-l 0.6s infinite linear; }
+        .state-walk .leg.r { animation: walk-leg-r 0.6s infinite linear; }
+        .state-walk .arm.l { animation: walk-arm-l 0.6s infinite linear; }
+        .state-walk .arm.r { animation: walk-arm-r 0.6s infinite linear; }
+        .state-walk .body-group { animation: walk-bounce 0.3s infinite linear; }
+
+        .character.state-idle .rig-part { animation: breathe 3s infinite; }
+        .character.state-idle .eye { animation: blink 4s infinite; }
+        .character.state-idle .tail { animation: tailWag 4s infinite ease-in-out; }
+
+        /* KUSURSUZ OTURMA (Masanın Arkasında, Z-Index: 6) */
+        .character.state-sit { z-index: 6; } 
+        .character.state-sit .body-group { transform: translateY(14px); } 
+        .character.state-sit .leg { height: 16px; transform: rotate(-75deg) translate(-6px, -6px); border-radius: 5px 5px 8px 8px; } 
+        .character.state-sit .arm { transform: rotate(35deg) translate(2px, 5px); } 
+
+        /* KUSURSUZ UYUMA (Yorganın Altında, Z-Index: 6) */
+        .character.state-sleep { z-index: 6; transform: rotate(-88deg); }
+        .character.state-sleep .char-shadow { opacity: 0; }
+        .character.state-sleep .eye { transform: scaleY(0.1); background: #888; animation: none; }
+        .character.state-sleep .head-group { transform: rotate(-10deg); }
+        .character.state-sleep .zzzs { animation: zzz-anim 3s infinite; }
+
+        /* YENİ EYLEMLER */
+        .character.state-cook .arm.l { animation: washArm 0.4s infinite; }
+        .character.state-cook .mouth { animation: eatMouth 0.5s infinite; }
+        .character.state-wash .arm { animation: washArm 0.3s infinite; }
+        .character.state-type .arm { animation: typeArm 0.1s infinite; }
+        .character.state-watch .body-group { transform: translateY(14px); } 
+        .character.state-watch .leg { height: 16px; transform: rotate(-90deg) translate(-4px, -6px); } 
+
+        /* ==========================================
+           📱 UI LAYER & MODALS
+           ========================================== */
+        #top-ui { position: absolute; top: 15px; left: 15px; right: 15px; display: flex; justify-content: space-between; align-items: flex-start; z-index: 50; }
+        .ui-box { background: rgba(255, 255, 255, 0.95); border: 2px solid var(--text-dark); border-radius: 12px; padding: 10px; box-shadow: 4px 4px 0 rgba(0,0,0,0.8); display: flex; gap: 15px; align-items: center; }
+        .stat { display: flex; flex-direction: column; }
+        .stat-val { font-size: 18px; font-weight: 900; display:flex; align-items:center; gap:4px;}
+        .stat-label { font-size: 9px; font-weight: bold; text-transform: uppercase; margin-bottom: 2px; }
+        .bar-bg { width: 50px; height: 8px; background: #ddd; border-radius: 4px; border: 1px solid #aaa; overflow: hidden; }
+        .bar-fill { height: 100%; transition: width 0.3s; }
+
+        .btn-action { background: #fff; border: 2px solid var(--text-dark); border-radius: 12px; padding: 10px; font-weight: bold; cursor: pointer; box-shadow: 2px 4px 0 rgba(0,0,0,0.8); transition: 0.1s; display:flex; justify-content:center; align-items:center;}
+        .btn-action:active { transform: translateY(2px); box-shadow: 2px 2px 0 rgba(0,0,0,0.8);}
+        #btn-robux { background: #2ecc71; color: white; border-color: #27ae60; font-size:16px; animation: breathe 2s infinite;}
+
+        #menu-btn { width: 45px; height: 45px; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 4px; cursor: pointer; }
+        .menu-line { width: 20px; height: 3px; background: var(--text-dark); }
+        #side-menu { position: absolute; top: 0; right: 0; bottom: 0; width: 340px; background: rgba(255,255,255,0.95); border-left: 4px solid var(--text-dark); transform: translateX(100%); transition: transform 0.3s; z-index: 60; display: flex; flex-direction: column; }
+        #side-menu.open { transform: translateX(0); box-shadow: -10px 0 30px rgba(0,0,0,0.3); }
+        .menu-header { padding: 20px; border-bottom: 2px solid #ddd; display: flex; justify-content: space-between; font-weight: 900; }
+        .close-btn { background: #ff4757; color: white; width: 24px; height: 24px; text-align: center; border-radius: 50%; cursor: pointer; border: 2px solid var(--text-dark); display:flex; justify-content:center; align-items:center;}
+        .menu-tabs { display: flex; border-bottom: 2px solid #ccc; }
+        .tab-btn { flex: 1; padding: 10px; border: none; background: none; font-weight: bold; cursor: pointer; opacity: 0.5;}
+        .tab-btn.active { opacity: 1; border-bottom: 3px solid var(--text-dark); }
+        .menu-sec { display: none; padding: 15px; overflow-y: auto;}
+        .menu-sec.active { display: block; }
+        
+        .shop-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .shop-item { border: 2px solid var(--text-dark); border-radius: 8px; padding: 10px; text-align: center; background: #fff; box-shadow: 2px 2px 0 rgba(0,0,0,0.2); font-weight: bold; font-size: 11px;}
+        .shop-btn { width: 100%; margin-top: 5px; padding: 5px; background: #f1c40f; border: 2px solid var(--text-dark); border-radius: 4px; font-weight: bold; cursor: pointer; display:flex; justify-content:center; align-items:center; gap:5px;}
+        .up-card { background: #fff; border: 2px solid var(--text-dark); padding: 10px; border-radius: 8px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; box-shadow: 2px 2px 0 rgba(0,0,0,0.2);}
+        .up-head { font-size: 11px; background: #eee; padding: 5px; border-radius: 4px; margin-bottom: 10px; font-weight: bold; text-align: center;}
+
+        #fridge-ui { position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.8); z-index: 2000; display: none; justify-content: center; align-items: center;}
+        .f-box { background: #fff; border: 4px solid var(--text-dark); border-radius: 12px; padding: 25px; text-align: center; width: 320px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);}
+        .f-inv { font-size: 24px; font-weight: bold; margin: 15px 0; background: #f1c40f; padding: 10px; border-radius: 8px; border: 2px solid var(--text-dark); display:flex; justify-content:center; align-items:center; gap:10px;}
+
+        #black-screen, #modal { position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.8); z-index: 2000; display: none; justify-content: center; align-items: center;}
+        #flying-soap { position: absolute; top: 50%; left: 75%; width: 25px; height: 18px; background: #ffcccc; border: 2px solid #333; border-radius: 8px; z-index: 1000; opacity: 0; transform: scale(1); transition: all 0.5s;}
+        .modal-box { background: #fff; border: 4px solid var(--text-dark); border-radius: 12px; padding: 25px; text-align: center; width: 320px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);}
+        .m-btn { flex: 1; padding: 10px; border: 2px solid var(--text-dark); border-radius: 8px; font-weight: bold; cursor: pointer; background:#3498db; color:#fff; width:100%; margin-top:10px; transition: 0.2s; display:flex; justify-content:center; align-items:center; gap:5px;}
+        .m-btn:active { transform: scale(0.95); }
+        #btn-return { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); padding: 10px 30px; background: var(--text-dark); color: #fff; border: 2px solid #fff; border-radius: 20px; font-weight: bold; z-index: 100; cursor: pointer; display: none;}
+        
+        .loader { border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 0 auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute; display:none;">
+    <defs>
+        <path id="ico-robux" d="M5.4 2.1L21.9 5.4l-3.3 16.5-16.5-3.3L5.4 2.1zM12 9.5c-1.4 0-2.5 1.1-2.5 2.5s1.1 2.5 2.5 2.5 2.5-1.1 2.5-2.5-1.1-2.5-2.5-2.5z" />
+        <path id="ico-food" d="M12 3L2 12h20L12 3zm0 2.8l5.2 4.2H6.8L12 5.8zM2 13h20v4a5 5 0 01-5 5H7a5 5 0 01-5-5v-4z" />
+        <path id="ico-parts" d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.06-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.73,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.06,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.43-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.49-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z" />
+        <path id="ico-up" d="M4 12l1.41 1.41L11 7.83V20h2V7.83l5.58 5.59L20 12l-8-8-8 8z" />
+        <path id="ico-buy" d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z" />
+        <path id="ico-close" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
+        <path id="ico-check" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+        <path id="ico-palette" d="M12 3a9 9 0 0 0 0 18c.83 0 1.5-.67 1.5-1.5 0-.39-.15-.74-.39-1.01-.23-.26-.38-.61-.38-.99 0-.83.67-1.5 1.5-1.5H16c2.76 0 5-2.24 5-5 0-4.42-4.03-8-9-8zm-5.5 9c-.83 0-1.5-.67-1.5-1.5S5.67 9 6.5 9 8 9.67 8 10.5 7.33 12 6.5 12zm3-4C8.67 8 8 7.33 8 6.5S8.67 5 9.5 5s1.5.67 1.5 1.5S10.33 8 9.5 8zm5 0c-.83 0-1.5-.67-1.5-1.5S13.67 5 14.5 5s1.5.67 1.5 1.5S15.33 8 14.5 8zm3 4c-.83 0-1.5-.67-1.5-1.5S16.67 9 17.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z" />
+    </defs>
+</svg>
+
+<div id="game-wrapper">
+    <div id="lighting-layer"></div>
+
+    <!-- 🚪 MAIN ROOM -->
+    <div id="scene-main" class="scene active">
+        <div class="wall" id="room-wall"></div><div class="floor"></div>
+        <div class="window">
+            <div class="cloud" style="top: 10px; width: 40px; height: 15px; animation-duration: 15s;"></div>
+            <div class="cloud" style="top: 40px; width: 30px; height: 10px; animation-duration: 25s;"></div>
+            <div class="win-plant"><div class="pl-leaf"></div><div class="pl-leaf" style="left:8px; top:5px;"></div><div class="pl-pot"></div></div>
+        </div>
+        
+        <div class="door-frame" id="door-wc" onclick="askDoor('wc')"><div class="door-sign">WC</div></div>
+        <div class="door-frame" id="door-garden" onclick="askDoor('garden')"><div class="door-sign">OUT</div></div>
+
+        <!-- Mutfak -->
+        <div id="kitchen" class="furniture" data-level="1" onclick="openKitchenMenu()">
+            <div class="ground-shadow" style="bottom:-5px; width: 140px;"></div>
+            <div class="kit-base"></div><div class="kit-side"></div>
+            <div class="kit-top">
+                <div class="stove-burner" style="left: 15px;"></div><div class="stove-burner" style="left: 40px;"></div>
+                <div class="sink-hole"></div>
+            </div>
+            <div class="kit-fridge"><div class="kit-fridge-top"></div><div class="kit-fridge-side"></div></div>
+            <div class="kit-hood"></div>
+        </div>
+
+        <div id="desk" class="furniture" data-level="0" onclick="playGames()"><div class="ground-shadow"></div><div class="desk-leg l"></div><div class="desk-leg r"></div><div class="desk-top"></div><div class="desk-pc"></div></div>
+        <div id="plant" class="furniture" data-level="0"><div class="ground-shadow"></div><div class="pl-leaf"></div><div class="pl-leaf"></div><div class="pl-pot"></div></div>
+        <div id="tv" class="furniture" data-level="1" onclick="watchTV()"><div class="ground-shadow"></div><div class="tv-stand"></div><div class="tv-screen"></div></div>
+
+        <div id="rug" class="furniture"></div>
+        <div id="table" class="furniture" data-level="1">
+            <div class="ground-shadow"></div>
+            <div class="tb-mat"></div><div class="tb-leg l"></div><div class="tb-leg r"></div><div class="tb-top"></div>
+            <div id="dirty-plate" onclick="washDishesKitchen()" title="Wash Dishes (+20 NKT)"></div>
+        </div>
+        
+        <div id="bed" class="furniture" data-level="1"><div class="ground-shadow" style="width: 120px;"></div><div class="bed-headboard"></div><div class="bed-frame"></div><div class="bed-pillow"></div><div class="bed-blanket"></div></div>
+
+        <!-- KARAKTER -->
+        <div id="char-main" class="character state-idle" style="left: 45%; bottom: 25%;">
+            <div class="char-shadow"></div>
+            <div class="char-scaler" style="transform: rotateY(0deg);">
+                <div class="zzzs">Zzz</div>
+                <div class="rig-part">
+                    <div class="head-group"><div class="ear l"></div><div class="ear r"></div><div class="hair-back"></div><div class="face-base"><div class="eye l"></div><div class="eye r"></div><div class="mouth"></div></div><div class="hair-front"></div></div>
+                    <div class="body-group"><div class="tail"></div><div class="arm l"></div><div class="arm r"></div><div class="leg l"></div><div class="leg r"></div><div class="torso"></div><div class="skirt"></div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 🚿 BATHROOM -->
+    <div id="scene-wc" class="scene" data-mirror="0" data-tub="0">
+        <div class="wall"></div><div class="floor"></div><div class="rug"></div>
+        <div class="mirror"></div>
+        <div class="sink" onclick="washHands()"><div class="ground-shadow"></div></div>
+        <div class="shower-cabin"><div class="shower-head"></div><div class="water-drops" id="water-fx"></div></div>
+        <div class="bathtub"><div class="ground-shadow" style="width:140px;"></div></div>
+        
+        <div id="char-wc" class="character state-idle" style="left: 40%; bottom: 25%; display:none; transition: left 1.5s ease-in-out;">
+            <div class="char-shadow"></div>
+            <div class="char-scaler" style="transform: rotateY(0deg);">
+                <div class="rig-part">
+                    <div class="head-group"><div class="ear l"></div><div class="ear r"></div><div class="hair-back"></div><div class="face-base"><div class="eye l"></div><div class="eye r"></div><div class="mouth"></div></div><div class="hair-front"></div></div>
+                    <div class="body-group"><div class="tail"></div><div class="arm l"></div><div class="arm r"></div><div class="leg l"></div><div class="leg r"></div><div class="torso"></div><div class="skirt"></div></div>
+                </div>
+            </div>
+        </div>
+        <div id="flying-soap"></div>
+    </div>
+
+    <!-- 🌳 GARDEN -->
+    <div id="scene-garden" class="scene" data-tree="1" data-bench="0">
+        <div class="wall">
+            <div class="cloud" style="top: 20%; width: 80px; height: 30px; animation-duration: 40s;"></div>
+            <div class="cloud" style="top: 50%; width: 120px; height: 40px; animation-duration: 60s; opacity: 0.5;"></div>
+        </div>
+        <div class="floor"></div>
+        <div class="road"><div class="crosswalk"></div></div>
+        <div class="car"></div>
+        <div class="fence-row"></div>
+        <div class="garden-flower" style="left:20%;"></div><div class="garden-flower" style="left:40%;"></div>
+        
+        <div class="css-tree">
+            <div class="ground-shadow" style="bottom:-10px; width:40px; left:60px;"></div>
+            <div class="tree-trunk"></div><div class="tree-leaf-1"></div><div class="tree-leaf-2"></div>
+            <div class="falling-leaf" style="left: 10px; animation-delay: 0s;"></div>
+            <div class="falling-leaf" style="left: 60px; animation-delay: 1.5s;"></div>
+            <div class="falling-leaf" style="left: 30px; animation-delay: 3s;"></div>
+        </div>
+        <div class="bench" onclick="sitBench()"><div class="ground-shadow"></div></div>
+        
+        <div id="char-garden" class="character state-idle" style="left: 50%; bottom: 25%; display:none; z-index: 10;">
+            <div class="char-shadow"></div>
+            <div class="char-scaler" style="transform: rotateY(0deg);">
+                <div class="rig-part">
+                    <div class="head-group"><div class="ear l"></div><div class="ear r"></div><div class="hair-back"></div><div class="face-base"><div class="eye l"></div><div class="eye r"></div></div><div class="hair-front"></div></div>
+                    <div class="body-group"><div class="tail"></div><div class="arm l"></div><div class="arm r"></div><div class="leg l"></div><div class="leg r"></div><div class="torso"></div><div class="skirt"></div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 📱 UI LAYER -->
+    <div id="top-ui">
+        <div class="ui-box">
+            <div class="stat"><span class="stat-label">Clock</span><span class="stat-val" id="clock-val">12:00</span></div>
+            <div class="stat"><span class="stat-label">NKT</span><span class="stat-val" id="nkt-val">150000</span></div>
+            <div class="stat"><span class="stat-label">Energy</span><div class="bar-bg"><div class="bar-fill" id="bar-energy" style="background: #f1c40f; width: 100%;"></div></div></div>
+            <div class="stat"><span class="stat-label">Hunger</span><div class="bar-bg"><div class="bar-fill" id="bar-hunger" style="background: #e74c3c; width: 100%;"></div></div></div>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+            <div class="ui-box" id="menu-btn" onclick="toggleMenu()"><div class="menu-line"></div><div class="menu-line"></div><div class="menu-line"></div></div>
+            <button class="btn-action" onclick="changeWallpaper()"><svg class="ic" viewBox="0 0 24 24"><use href="#ico-palette"/></svg></button>
+            <button class="btn-action" id="btn-robux" onclick="openRobloxFlow()"><svg class="ic" viewBox="0 0 24 24"><use href="#ico-robux"/></svg></button>
+        </div>
+    </div>
+
+    <button id="btn-return" onclick="returnToMain()">RETURN</button>
+
+    <!-- 🛒 MENÜ -->
+    <div id="side-menu">
+        <div class="menu-header"><span>Manager</span><div class="close-btn" onclick="toggleMenu()"><svg class="ic" viewBox="0 0 24 24"><use href="#ico-close"/></svg></div></div>
+        <div class="menu-tabs">
+            <button class="tab-btn active" onclick="switchTab('shop', this)">Shop</button>
+            <button class="tab-btn" onclick="switchTab('upgrades', this)">Upgrades</button>
+        </div>
+        
+        <div id="sec-shop" class="menu-sec active">
+            <div style="padding: 10px; font-size:11px; font-weight:bold; background:#eee; margin-bottom:10px; border-radius:6px; display:flex; justify-content:space-around;">
+                <span><svg class="ic" viewBox="0 0 24 24"><use href="#ico-food"/></svg> <span id="inv-food">5</span></span>
+                <span><svg class="ic" viewBox="0 0 24 24"><use href="#ico-parts"/></svg> <span id="inv-parts">5</span></span>
+            </div>
+            <div class="shop-grid">
+                <div class="shop-item"><svg class="ic" viewBox="0 0 24 24"><use href="#ico-food"/></svg> Food (50)<button class="shop-btn" onclick="buy('food', 50)"><svg class="ic" viewBox="0 0 24 24"><use href="#ico-buy"/></svg> Buy</button></div>
+                <div class="shop-item"><svg class="ic" viewBox="0 0 24 24"><use href="#ico-parts"/></svg> Parts (100)<button class="shop-btn" onclick="buy('parts', 100)"><svg class="ic" viewBox="0 0 24 24"><use href="#ico-buy"/></svg> Buy</button></div>
+            </div>
+        </div>
+
+        <div id="sec-upgrades" class="menu-sec">
+            <div class="up-head">-- MAIN ROOM --</div>
+            <div class="up-card"><div><p style="font-weight:bold;">Desk LV.<span id="lvl-desk">0</span></p><p style="font-size:10px;">Cost: 2 Parts</p></div><button class="shop-btn" style="width:50px; margin:0;" onclick="upgrade('desk')"><svg class="ic" viewBox="0 0 24 24"><use href="#ico-up"/></svg></button></div>
+            <div class="up-card"><div><p style="font-weight:bold;">Plant LV.<span id="lvl-plant">0</span></p><p style="font-size:10px;">Cost: 1 Part</p></div><button class="shop-btn" style="width:50px; margin:0;" onclick="upgrade('plant')"><svg class="ic" viewBox="0 0 24 24"><use href="#ico-up"/></svg></button></div>
+            <div class="up-card"><div><p style="font-weight:bold;">Bed LV.<span id="lvl-bed">1</span></p><p style="font-size:10px;">Cost: 1 Part</p></div><button class="shop-btn" style="width:50px; margin:0;" onclick="upgrade('bed')"><svg class="ic" viewBox="0 0 24 24"><use href="#ico-up"/></svg></button></div>
+            <div class="up-card"><div><p style="font-weight:bold;">Table LV.<span id="lvl-table">1</span></p><p style="font-size:10px;">Cost: 1 Part</p></div><button class="shop-btn" style="width:50px; margin:0;" onclick="upgrade('table')"><svg class="ic" viewBox="0 0 24 24"><use href="#ico-up"/></svg></button></div>
+            <div class="up-card"><div><p style="font-weight:bold;">TV LV.<span id="lvl-tv">1</span></p><p style="font-size:10px;">Cost: 2 Parts</p></div><button class="shop-btn" style="width:50px; margin:0;" onclick="upgrade('tv')"><svg class="ic" viewBox="0 0 24 24"><use href="#ico-up"/></svg></button></div>
+            <div class="up-card"><div><p style="font-weight:bold;">Kitchen LV.<span id="lvl-kitchen">1</span></p><p style="font-size:10px;">Cost: 2 Parts</p></div><button class="shop-btn" style="width:50px; margin:0;" onclick="upgrade('kitchen')"><svg class="ic" viewBox="0 0 24 24"><use href="#ico-up"/></svg></button></div>
+            
+            <div class="up-head">-- BATHROOM --</div>
+            <div class="up-card"><div><p style="font-weight:bold;">Mirror LV.<span id="lvl-mirror">0</span></p><p style="font-size:10px;">Cost: 1 Part</p></div><button class="shop-btn" style="width:50px; margin:0;" onclick="upgrade('mirror')"><svg class="ic" viewBox="0 0 24 24"><use href="#ico-up"/></svg></button></div>
+            <div class="up-card"><div><p style="font-weight:bold;">Bathtub LV.<span id="lvl-tub">0</span></p><p style="font-size:10px;">Cost: 3 Parts</p></div><button class="shop-btn" style="width:50px; margin:0;" onclick="upgrade('tub')"><svg class="ic" viewBox="0 0 24 24"><use href="#ico-up"/></svg></button></div>
+            
+            <div class="up-head">-- GARDEN --</div>
+            <div class="up-card"><div><p style="font-weight:bold;">Tree LV.<span id="lvl-tree">1</span></p><p style="font-size:10px;">Cost: 2 Parts</p></div><button class="shop-btn" style="width:50px; margin:0;" onclick="upgrade('tree')"><svg class="ic" viewBox="0 0 24 24"><use href="#ico-up"/></svg></button></div>
+            <div class="up-card"><div><p style="font-weight:bold;">Bench LV.<span id="lvl-bench">0</span></p><p style="font-size:10px;">Cost: 1 Part</p></div><button class="shop-btn" style="width:50px; margin:0;" onclick="upgrade('bench')"><svg class="ic" viewBox="0 0 24 24"><use href="#ico-up"/></svg></button></div>
+        </div>
+    </div>
+
+    <!-- 🍳 FRIDGE / COOKING UI -->
+    <div id="fridge-ui">
+        <div class="f-box">
+            <h2>Fridge</h2>
+            <div class="f-inv"><svg class="ic" viewBox="0 0 24 24"><use href="#ico-food"/></svg> <span id="f-food-val">0</span></div>
+            <button class="m-btn" style="background:#f39c12;" onclick="eatSnack()"><svg class="ic" viewBox="0 0 24 24"><use href="#ico-check"/></svg> Eat Snack (-1 Food)</button>
+            <button class="m-btn" style="background:#95a5a6; margin-top:20px;" onclick="document.getElementById('fridge-ui').style.display='none'">Close</button>
+        </div>
+    </div>
+
+    <div id="black-screen"></div>
+    <div id="modal"><div class="modal-box"><h2 id="m-title">Title</h2><p id="m-desc">Desc</p><div id="m-btns"></div></div></div>
+</div>
+
+<script>
+    /* ==========================================
+       🧠 CORE LOGIC, PATHFINDING & LIFE SIM
+       ========================================== */
+    let gameTime = 12 * 60; 
+    let energy = 100, hunger = 100, nkt = 150000;
+    let inv = { food: 5, parts: 5 }; 
+    let furn = { bed: 1, table: 1, tv: 1, kitchen: 1, desk: 0, plant: 0, mirror: 0, tub: 0, tree: 1, bench: 0 };
+    let currentScene = 'main', inCutscene = false, showerTimer = null;
+
+    window.onload = () => { setTimeout(() => { document.getElementById('black-screen').style.opacity = '0'; }, 500); updateUI(); }
+
+    /* GELİŞTİRİLMİŞ AKILLI YÜRÜTME (Hedef Karaktere Göre Z-Index) */
+    function moveToAndDo(charId, stateClass, targetLeft, faceLeft, duration, callback) {
+        if(inCutscene) return;
+        inCutscene = true;
+        let char = document.getElementById(charId);
+        let scaler = char.querySelector('.char-scaler');
+        
+        let currentLeft = parseFloat(char.style.left || 45);
+        scaler.style.transform = targetLeft < currentLeft ? 'rotateY(180deg)' : 'rotateY(0deg)'; 
+        
+        char.className = 'character state-walk';
+        char.style.left = targetLeft + '%';
+        
+        setTimeout(() => {
+            if(faceLeft !== null) scaler.style.transform = faceLeft ? 'rotateY(180deg)' : 'rotateY(0deg)';
+            char.className = 'character ' + stateClass;
+            
+            if(duration > 0) {
+                setTimeout(() => {
+                    if(callback) callback();
+                    inCutscene = false; updateUI();
+                }, duration);
+            } else {
+                if(callback) callback();
+                inCutscene = false; 
+            }
+        }, 1500); 
+    }
+
+    setInterval(() => {
+        if(inCutscene) return;
+        gameTime += 10;
+        if(gameTime >= 24 * 60) gameTime = 0;
+        updateTimeVisuals();
+
+        hunger -= 0.5; nkt += 5; 
+        const char = document.getElementById('char-main');
+        const hour = Math.floor(gameTime / 60);
+        const isNight = hour >= 22 || hour < 7;
+
+        if (currentScene === 'main') {
+            if ((energy < 20 || isNight) && !char.className.includes('state-sleep')) { 
+                moveToAndDo('char-main', 'state-sleep', 86, false, 0, null); 
+            } 
+            else if (char.className.includes('state-sleep')) {
+                if (!isNight && energy >= 100) char.className = 'character state-idle';
+                else energy = Math.min(100, energy + (isNight ? 2 : 4));
+            }
+            else if (energy > 80 && hunger > 50 && Math.random() > 0.6 && char.className === 'character state-idle') { 
+                moveToAndDo('char-main', 'state-sit', 54, true, 5000, () => { char.className = 'character state-idle'; }); 
+            } 
+            else if (char.className === 'character state-idle' && Math.random() > 0.5) { 
+                let newLeft = Math.floor(Math.random() * 40 + 20);
+                moveToAndDo('char-main', 'state-idle', newLeft, null, 0, null);
+                energy -= 0.5;
+            }
+        }
+        updateUI();
+    }, 2000);
+
+    function updateTimeVisuals() {
+        let h = Math.floor(gameTime / 60); let m = gameTime % 60;
+        document.getElementById('clock-val').innerText = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+        let root = document.documentElement;
+        if(h >= 6 && h < 18) { root.style.setProperty('--sky-color', '#87CEEB'); root.style.setProperty('--ambient-light', 'rgba(0, 0, 50, 0)'); } 
+        else if (h >= 18 && h < 20) { root.style.setProperty('--sky-color', '#ff9f43'); root.style.setProperty('--ambient-light', 'rgba(200, 100, 0, 0.1)'); } 
+        else { root.style.setProperty('--sky-color', '#192a56'); root.style.setProperty('--ambient-light', 'rgba(0, 0, 20, 0.6)'); }
+    }
+
+    const wallpapers = ["repeating-linear-gradient(90deg, transparent, transparent 80px, rgba(0,0,0,0.03) 80px, rgba(0,0,0,0.03) 82px)", "repeating-linear-gradient(0deg, #ffc0cb, #ffc0cb 20px, #ffb6c1 20px, #ffb6c1 40px)", "linear-gradient(to bottom, #2c3e50, #3498db)"];
+    let wIdx = 0;
+    function changeWallpaper() { wIdx = (wIdx + 1) % wallpapers.length; document.getElementById('room-wall').style.backgroundImage = wallpapers[wIdx]; document.getElementById('room-wall').style.backgroundColor = (wIdx === 2) ? '#2c3e50' : '#f2efe9'; }
+
+    function buy(item, cost) { if(nkt >= cost) { nkt -= cost; inv[item]++; updateUI(); } else alert("No NKT!"); }
+    
+    const upReqs = { bed: 1, table: 1, tv: 2, kitchen: 2, desk: 2, plant: 1, mirror: 1, tub: 3, tree: 2, bench: 1 };
+    function upgrade(type) {
+        let maxLvl = (type === 'desk' || type === 'plant' || type === 'mirror' || type === 'tub' || type === 'bench') ? 1 : 2;
+        if(furn[type] >= maxLvl) return alert("Maxed out!");
+        if(inv.parts >= upReqs[type]) {
+            inv.parts -= upReqs[type]; furn[type]++;
+            if(type === 'mirror' || type === 'tub' || type === 'bench' || type === 'tree') {
+                if(type === 'mirror') document.getElementById('scene-wc').setAttribute('data-mirror', 1);
+                if(type === 'tub') document.getElementById('scene-wc').setAttribute('data-tub', 1);
+                if(type === 'bench') document.getElementById('scene-garden').setAttribute('data-bench', 1);
+                if(type === 'tree') document.getElementById('scene-garden').setAttribute('data-tree', 2);
+                document.getElementById(`lvl-${type}`).innerText = 'MAX';
+            } else {
+                document.getElementById(type).setAttribute('data-level', furn[type]);
+                document.getElementById(`lvl-${type}`).innerText = furn[type];
+            }
+            updateUI();
+        } else alert(`Need ${upReqs[type]} Parts!`);
+    }
+
+    function updateUI() {
+        document.getElementById('nkt-val').innerText = nkt.toLocaleString();
+        document.getElementById('bar-energy').style.width = Math.min(100, energy) + '%';
+        document.getElementById('bar-hunger').style.width = Math.max(0, hunger) + '%';
+        document.getElementById('inv-food').innerText = inv.food;
+        document.getElementById('inv-parts').innerText = inv.parts;
+        document.getElementById('f-food-val').innerText = inv.food;
+    }
+
+    /* 🍳 ETKİLEŞİMLER (YENİ OYUN & TV & LAVABO) */
+    function openKitchenMenu() {
+        if(inCutscene) return;
+        showModal("Kitchen Station", "What do you want to do?", [
+            { t: "<svg class='ic' viewBox='0 0 24 24'><use href='#ico-check'/></svg> Open Fridge", c: "#3498db", a: () => { closeModals(); document.getElementById('fridge-ui').style.display = 'flex'; updateUI(); } },
+            { t: "<svg class='ic' viewBox='0 0 24 24'><use href='#ico-check'/></svg> Cook Meal (2 Food)", c: "#e74c3c", a: () => { closeModals(); cookMeal(); } },
+            { t: "Cancel", c: "#95a5a6", a: closeModals }
+        ]);
+    }
+
+    function eatSnack() {
+        if(inv.food >= 1) { 
+            inv.food -= 1; document.getElementById('fridge-ui').style.display = 'none';
+            moveToAndDo('char-main', 'state-idle', parseFloat(document.getElementById('char-main').style.left), null, 1000, () => {
+                hunger = Math.min(100, hunger + 30); document.getElementById('dirty-plate').style.display = 'block'; updateUI();
+            });
+        } else alert("No Food!");
+    }
+    
+    function cookMeal() {
+        if(inv.food >= 2) {
+            inv.food -= 2; 
+            moveToAndDo('char-main', 'state-cook', 12, true, 4000, () => {
+                hunger = 100; energy = Math.min(100, energy + 20); document.getElementById('dirty-plate').style.display = 'block'; char.className = 'character state-idle';
+            });
+        } else alert("Need 2 Food!");
+    }
+
+    function washDishesKitchen() {
+        if(document.getElementById('dirty-plate').style.display === 'block') {
+            moveToAndDo('char-main', 'state-wash', 18, true, 3000, () => {
+                document.getElementById('dirty-plate').style.display = 'none'; nkt += 20; char.className = 'character state-idle';
+            });
+        } else alert("No dirty plates!");
+    }
+
+    function playGames() {
+        if(furn.desk === 0) return;
+        document.getElementById('desk').classList.add('playing');
+        moveToAndDo('char-main', 'state-type', 20, false, 5000, () => {
+            nkt += 50; energy -= 10; document.getElementById('desk').classList.remove('playing'); char.className = 'character state-idle';
+        });
+    }
+
+    function watchTV() {
+        document.getElementById('tv').classList.add('watching');
+        moveToAndDo('char-main', 'state-watch', 56, false, 6000, () => {
+            document.getElementById('tv').classList.remove('watching'); char.className = 'character state-idle';
+        });
+    }
+
+    function washHands() {
+        moveToAndDo('char-wc', 'state-wash', 20, true, 3000, () => {
+            energy = Math.min(100, energy + 5); char.className = 'character state-idle';
+        });
+    }
+
+    function sitBench() {
+        if(furn.bench === 0) return;
+        moveToAndDo('char-garden', 'state-sit', 75, true, 5000, () => {
+            energy = Math.min(100, energy + 15); char.className = 'character state-idle';
+        });
+    }
+
+    /* 🚪 SCENE MANAGEMENT */
+    function askDoor(target) {
+        if(inCutscene) return;
+        showModal(`Go to ${target === 'wc' ? "Bathroom" : "Garden"}?`, "Leave your room?", [
+            { t: "YES", c: "#2ecc71", a: () => { document.getElementById('modal').style.display='none'; goScene(target); } },
+            { t: "NO", c: "#e74c3c", a: () => document.getElementById('modal').style.display='none' }
+        ]);
+    }
+
+    function goScene(target) {
+        const bs = document.getElementById('black-screen'); bs.style.opacity = '1';
+        setTimeout(() => {
+            document.querySelectorAll('.scene').forEach(s => s.classList.remove('active')); document.getElementById(`scene-${target}`).classList.add('active');
+            document.getElementById('btn-return').style.display = 'block'; currentScene = target;
+            if(target === 'wc') { const c = document.getElementById('char-wc'); c.style.display = 'block'; c.className = 'character state-idle'; }
+            if(target === 'garden') { const cg = document.getElementById('char-garden'); cg.style.display = 'block'; cg.className = 'character state-idle'; }
+            bs.style.opacity = '0';
+        }, 600);
+    }
+
+    function returnToMain() {
+        if(inCutscene) return; clearTimeout(showerTimer);
+        const bs = document.getElementById('black-screen'); bs.style.opacity = '1';
+        setTimeout(() => {
+            document.querySelectorAll('.scene').forEach(s => s.classList.remove('active')); document.getElementById('scene-main').classList.add('active');
+            document.getElementById('btn-return').style.display = 'none'; document.getElementById('water-fx').style.opacity = '0'; 
+            document.getElementById('char-wc').style.display = 'none'; document.getElementById('char-garden').style.display = 'none';
+            currentScene = 'main'; bs.style.opacity = '0';
+        }, 600);
+    }
+
+    /* ==========================================
+       🚀 REAL ROBLOX API INTEGRATION (ROPROXY)
+       ========================================== */
+    let robloxUser = null;
+
+    function showModal(t, d, btns) {
+        document.getElementById('m-title').innerHTML = t; document.getElementById('m-desc').innerHTML = d;
+        const bg = document.getElementById('m-btns'); bg.innerHTML = '';
+        btns.forEach(b => { let btn = document.createElement('button'); btn.className = 'm-btn'; btn.style.background = b.c; btn.innerHTML = b.t; btn.onclick = b.a; bg.appendChild(btn); });
+        document.getElementById('modal').style.display = 'flex';
+    }
+    function closeModals() { document.getElementById('modal').style.display = 'none'; }
+    function toggleMenu() { document.getElementById('side-menu').classList.toggle('open'); }
+    function switchTab(id, btn) { document.querySelectorAll('.menu-sec, .tab-btn').forEach(el => el.classList.remove('active')); document.getElementById(`sec-${id}`).classList.add('active'); btn.classList.add('active'); }
+
+    function openRobloxFlow() {
+        if(robloxUser) return openRobloxDashboard();
+        showModal("Link Roblox Account",
+            `<input type='text' id='rbx-user' placeholder='Enter Username' style='width:90%; padding:10px; margin:10px 0; border:2px solid #333; border-radius:8px; font-weight:bold; text-align:center;'>
+             <p style='font-size:11px; color:#555;'>Searches real Roblox servers via RoProxy API.</p>`,
+            [{t: "Find Player", c: "#2ecc71", a: () => searchRobloxUser()}, {t: "Cancel", c: "#e74c3c", a: () => closeModals()}]
+        );
+    }
+
+    async function searchRobloxUser() {
+        const username = document.getElementById('rbx-user').value.trim();
+        if(username.length < 3) return alert("Username too short!");
+        document.getElementById('m-desc').innerHTML = "<div class='loader'></div><p style='margin-top:10px;'>Connecting to Roblox...</p>";
+        document.getElementById('m-btns').innerHTML = "";
+        
+        try {
+            const res = await fetch("https://users.roproxy.com/v1/usernames/users", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ usernames: [username], excludeBannedUsers: true }) });
+            const data = await res.json();
+            if(!data.data || data.data.length === 0) return showModal("Not Found", `User <b>${username}</b> does not exist.`, [{t: "Back", c: "#e74c3c", a: openRobloxFlow}]);
+            
+            const userId = data.data[0].id; const actualName = data.data[0].name; const displayName = data.data[0].displayName;
+            const avatarRes = await fetch(`https://thumbnails.roproxy.com/v1/users/avatar-headshot?userIds=${userId}&size=150x150&format=Png&isCircular=true`);
+            const avatarData = await avatarRes.json(); const avatarUrl = avatarData.data[0].imageUrl;
+
+            robloxUser = { id: userId, username: actualName, display: displayName, avatar: avatarUrl };
+            
+            showModal("Profile Found!",
+                `<img src="${avatarUrl}" style="width:100px; height:100px; border-radius:50%; border:4px solid #2ecc71; margin-bottom:10px; box-shadow: 0 4px 10px rgba(0,0,0,0.2);">
+                 <p style='font-weight:900; font-size:20px;'>${displayName}</p>
+                 <p style='font-size:12px; color:#555;'>@${actualName}</p>`,
+                [{t: "Yes, Select", c: "#3498db", a: () => openRobloxDashboard()}, {t: "No, Go Back", c: "#95a5a6", a: () => {robloxUser = null; openRobloxFlow();}}]
+            );
+        } catch(e) { showModal("API Error", "Roblox servers are rate-limiting or offline.", [{t: "Back", c: "#e74c3c", a: openRobloxFlow}]); }
+    }
+
+    function openRobloxDashboard() {
+        showModal(`Robux Dashboard`,
+            `<div style='display:flex; align-items:center; justify-content:center; gap:10px; background:#f1f2f6; padding:10px; border-radius:8px; margin-bottom:10px; border:2px solid #ddd;'>
+                <img src="${robloxUser.avatar}" style="width:40px; height:40px; border-radius:50%; border:2px solid #333;">
+                <div style="text-align:left;"><p style='font-size:11px; color:#555;'>Connected as:</p><p style='font-size:14px; font-weight:bold;'>${robloxUser.display}</p></div>
+             </div>
+             <p style='font-size:14px; color:#27ae60; font-weight:900;'>Balance: ${nkt.toLocaleString()} NKT</p>
+             <p style='font-size:10px; color:#e74c3c; font-weight:bold; margin-top:5px;'>Rate: 10,000 NKT = 1 R$ (Min 10 R$)</p>`,
+            [{t: "Check Gamepasses", c: "#f1c40f", a: () => fetchGamepasses()}, {t: "Close", c: "#7f8c8d", a: () => closeModals()}]
+        );
+    }
+
+    async function fetchGamepasses() {
+        document.getElementById('m-desc').innerHTML = "<div class='loader'></div><p style='margin-top:10px; font-size:12px;'>Fetching Gamepasses...</p>";
+        document.getElementById('m-btns').innerHTML = "";
+
+        try {
+            const gamesRes = await fetch(`https://games.roproxy.com/v2/users/${robloxUser.id}/games?accessFilter=Public&sortOrder=Asc&limit=50`);
+            const gamesData = await gamesRes.json();
+            if(!gamesData.data || gamesData.data.length === 0) return showModal("No Public Games", "You don't have any public games on Roblox.", [{t: "Back", c: "#e74c3c", a: openRobloxDashboard}]);
+
+            let allGamepasses = [];
+            for(const game of gamesData.data) {
+                const gpRes = await fetch(`https://games.roproxy.com/v1/games/${game.id}/game-passes?limit=50&sortOrder=Asc`);
+                const gpData = await gpRes.json();
+                if(gpData.data) allGamepasses.push(...gpData.data);
+            }
+
+            if(allGamepasses.length === 0) return showModal("No Gamepasses", "No Gamepasses found in your games.", [{t: "Back", c: "#e74c3c", a: openRobloxDashboard}]);
+
+            let html = `<div style='max-height:160px; overflow-y:auto; border:2px solid #ccc; border-radius:6px; text-align:left; background:#fafafa;'>`;
+            allGamepasses.forEach(gp => {
+                const price = gp.price || 0;
+                html += `<div style='padding:10px; border-bottom:1px solid #ddd; display:flex; justify-content:space-between; align-items:center;'>
+                            <div><div style='font-size:12px; font-weight:bold;'>${gp.name}</div><div style='font-size:11px; color:#27ae60; font-weight:900;'>${price} R$</div></div>
+                            <button onclick='withdrawRobux(${price}, "${gp.name.replace(/"/g, '')}")' style='background:#2ecc71; color:#fff; border:2px solid #27ae60; border-radius:4px; padding:6px 12px; font-weight:bold;'>Buy</button>
+                         </div>`;
+            });
+            showModal("Select Gamepass", html + "</div>", [{t: "Back", c: "#e74c3c", a: openRobloxDashboard}]);
+        } catch (e) { showModal("API Error", "Error fetching Gamepasses.", [{t: "Back", c: "#e74c3c", a: openRobloxDashboard}]); }
+    }
+
+    function withdrawRobux(robuxAmount, passName) {
+        if(robuxAmount < 10) return alert("Minimum withdrawal is 10 Robux!");
+        let costInNKT = robuxAmount * 10000;
+        if(nkt >= costInNKT) {
+            if(confirm(`Buy "${passName}" for ${robuxAmount} Robux?\nCost: ${costInNKT.toLocaleString()} NKT`)) {
+                nkt -= costInNKT; updateUI();
+                alert(`SUCCESS!\n${robuxAmount} Robux is pending in @${robloxUser.username}'s Roblox account!`);
+                closeModals();
+            }
+        } else alert(`Not enough NKT!\nYou need ${costInNKT.toLocaleString()} NKT.`);
+    }
+</script>
+</body>
+</html>
