@@ -17,13 +17,16 @@
     #energyFill{background:linear-gradient(90deg,#6ae4ff,#4ec2ff)}
     #hungerFill{background:linear-gradient(90deg,#ffd36a,#ff9f42)}
     #buttons{position:absolute;right:12px;top:12px;display:flex;gap:8px;pointer-events:auto}
-    button{border:0;border-radius:10px;padding:10px 12px;background:#222;color:#fff;font-weight:700;cursor:pointer;min-width:44px;min-height:44px}
+    button{border:0;border-radius:10px;padding:10px 12px;background:#222;color:#fff;font-weight:700;cursor:pointer;min-width:44px;min-height:44px;transition:transform .15s ease, filter .15s ease}
     button:hover{filter:brightness(1.1)}
-    #side{position:absolute;right:-360px;top:70px;width:340px;max-width:90vw;pointer-events:auto;transition:right .25s}
-    #side.open{right:12px}
+    button:active{transform:scale(1.08)}
+    #side{position:absolute;right:-360px;top:70px;width:340px;max-width:90vw;pointer-events:auto;transition:right .25s, width .25s}
+    #side.open{right:12px;width:400px}
     .tabs{display:flex;gap:6px;margin-bottom:8px}.tabs button{flex:1}
     .list{max-height:55vh;overflow:auto;display:grid;gap:8px}
-    .row{display:flex;justify-content:space-between;align-items:center;background:#0005;border-radius:8px;padding:8px}
+    .row{display:flex;justify-content:space-between;align-items:center;background:#0005;border-radius:8px;padding:8px;transition:transform .18s ease, background .18s ease}
+    .row:hover{background:#ffffff1c}
+    .row:active{transform:scale(1.03)}
     #returnBtn{position:absolute;left:50%;transform:translateX(-50%);bottom:12px;display:none;pointer-events:auto}
     #modalWrap,#robuxWrap,#fade{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:30}
     #fade{background:#000;z-index:25;opacity:0;pointer-events:none;transition:opacity .4s}
@@ -158,7 +161,16 @@ const modelUrls={
 };
 
 const character = new THREE.Group(); character.position.set(0,0,0); scene.add(character);
-const fallbackBody = new THREE.Mesh(new THREE.CapsuleGeometry(0.25,0.8,4,8),new THREE.MeshStandardMaterial({color:0xffc9de})); fallbackBody.position.y=0.7; fallbackBody.castShadow=true; character.add(fallbackBody);
+const fallbackBody = new THREE.Group();
+const bodyCore = new THREE.Mesh(new THREE.CylinderGeometry(0.25,0.25,0.8,12),new THREE.MeshStandardMaterial({color:0xffc9de}));
+const bodyTop = new THREE.Mesh(new THREE.SphereGeometry(0.25,12,12),new THREE.MeshStandardMaterial({color:0xffc9de}));
+const bodyBottom = new THREE.Mesh(new THREE.SphereGeometry(0.25,12,12),new THREE.MeshStandardMaterial({color:0xffc9de}));
+bodyTop.position.y = 0.4;
+bodyBottom.position.y = -0.4;
+fallbackBody.add(bodyCore, bodyTop, bodyBottom);
+fallbackBody.position.y=0.9;
+fallbackBody.traverse(o=>{ if(o.isMesh) o.castShadow=true; });
+character.add(fallbackBody);
 const tail = new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.08,0.5,6),new THREE.MeshStandardMaterial({color:0x60445a})); tail.position.set(-0.2,0.5,-0.1); tail.rotation.x=1.3; character.add(tail);
 const zzzDiv=document.createElement('div'); zzzDiv.className='css2d-label'; zzzDiv.textContent='Zzz...'; zzzDiv.style.display='none';
 const zzzLabel=new CSS2DObject(zzzDiv); zzzLabel.position.set(0,1.8,0); character.add(zzzLabel);
