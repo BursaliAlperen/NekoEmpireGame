@@ -1,0 +1,6894 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<title>
+NEKOTOKYO: NEKO LIFE & ROBUX</title>
+<style>
+/* ========================================= CSS ART VARIABLES & GLOBAL SETTINGS ========================================= */ :root  {
+
+--wood-light: #d4a373;
+
+--wood: #a67c52;
+
+--wood-dark: #7a5230;
+
+--wood-shadow: #4d3319;
+
+--wall-main: #fff0f5;
+
+--wall-stripe: #ffe4e1;
+
+--wall-bath: #e0f7fa;
+
+--tile-bath: #b2ebf2;
+
+--wall-depot: #1a1a2e;
+
+--floor-depot: #16213e;
+
+--accent-pink: #ff9ff3;
+
+--accent-pink-dark: #f368e0;
+
+--neko-skin: #ffe0d0;
+
+--neko-skin-shadow: #f5c2b0;
+
+--neko-hair: #ff9ff3;
+
+--neko-hair-shadow: #d980ce;
+
+--neko-hair-light: #ffc9fa;
+
+--neko-eye-top: #ff007f;
+
+--neko-eye-bot: #ffb6c1;
+
+--glass: rgba(255,255,255,0.2);
+
+--glass-glow: rgba(255,255,255,0.5);
+
+--ui-bg: #faf6f0;
+
+--ui-border: #2f3542;
+
+}
+
+body  {
+
+margin: 0;
+
+padding: 0;
+
+overflow: hidden;
+
+background-color: #111;
+
+font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+
+display: flex;
+
+justify-content: center;
+
+align-items: center;
+
+height: 100vh;
+
+user-select: none;
+
+}
+
+/* Loading Screen */ #loading-screen  {
+
+position: absolute;
+
+top:0;
+
+left:0;
+
+width:100%;
+
+height:100%;
+
+background: #0f0f1b;
+
+z-index: 9999;
+
+display: flex;
+
+flex-direction: column;
+
+justify-content: center;
+
+align-items: center;
+
+color: #fff;
+
+}
+
+.loader-neko  {
+
+width: 50px;
+
+height: 50px;
+
+background: var(--neko-hair);
+
+border-radius: 50%;
+
+border: 3px solid #fff;
+
+animation: bounce 0.5s infinite alternate;
+
+margin-bottom: 20px;
+
+position: relative;
+
+}
+
+.loader-neko::before, .loader-neko::after  {
+
+content:'';
+
+position:absolute;
+
+width:15px;
+
+height:15px;
+
+background:var(--neko-hair);
+
+border:3px solid #fff;
+
+top:-10px;
+
+border-radius: 50% 50% 0 0;
+
+}
+
+.loader-neko::before  {
+
+left: -5px;
+
+transform: rotate(-30deg);
+
+}
+
+.loader-neko::after  {
+
+right: -5px;
+
+transform: rotate(30deg);
+
+}
+
+.progress-bar  {
+
+width: 300px;
+
+height: 20px;
+
+background: #222;
+
+border: 3px solid #fff;
+
+border-radius: 10px;
+
+overflow: hidden;
+
+box-shadow: 0 0 15px rgba(255,255,255,0.2);
+
+}
+
+.progress-fill  {
+
+width: 0%;
+
+height: 100%;
+
+background: linear-gradient(90deg, #ff9ff3, #feca57);
+
+transition: width 0.1s;
+
+}
+
+#tap-to-start  {
+
+display:none;
+
+font-size: 24px;
+
+cursor:pointer;
+
+margin-top: 30px;
+
+padding: 15px 40px;
+
+background: linear-gradient(135deg, var(--accent-pink), #feca57);
+
+border: 4px solid #fff;
+
+border-radius: 30px;
+
+font-weight: bold;
+
+color: #fff;
+
+text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+
+box-shadow: 0 5px 15px rgba(0,0,0,0.4);
+
+animation: pulseStart 1s infinite alternate;
+
+}
+
+#tap-to-start:active  {
+
+transform: scale(0.95);
+
+}
+
+@keyframes pulseStart  {
+
+from  {
+
+transform: scale(1);
+
+filter: drop-shadow(0 0 5px var(--accent-pink));
+
+}
+
+to  {
+
+transform: scale(1.05);
+
+filter: drop-shadow(0 0 20px var(--accent-pink));
+
+}
+
+}
+
+@keyframes bounce  {
+
+from  {
+
+transform: translateY(0);
+
+}
+
+to  {
+
+transform: translateY(-20px);
+
+}
+
+}
+
+/* Game Wrapper */ #game-wrapper  {
+
+width: 950px;
+
+height: 700px;
+
+position: relative;
+
+background-color: #000;
+
+overflow: hidden;
+
+transform-origin: top left;
+
+display: none;
+
+box-shadow: 0 0 50px rgba(0,0,0,1);
+
+}
+
+#lighting-layer  {
+
+position: absolute;
+
+top: 0;
+
+left: 0;
+
+width: 100%;
+
+height: 100%;
+
+pointer-events: none;
+
+z-index: 100;
+
+transition: background-color 1s, backdrop-filter 1s;
+
+}
+
+/* ========================================= ROOM BACKGROUNDS & FLOORS ========================================= */ .room  {
+
+position: absolute;
+
+width: 100%;
+
+height: 100%;
+
+display: none;
+
+}
+
+.room.active  {
+
+display: block;
+
+animation: fadeIn 0.5s;
+
+}
+
+@keyframes fadeIn  {
+
+from  {
+
+opacity: 0;
+
+}
+
+to  {
+
+opacity: 1;
+
+}
+
+}
+
+.wall  {
+
+position: absolute;
+
+top: 0;
+
+left: 0;
+
+width: 100%;
+
+height: 480px;
+
+box-sizing: border-box;
+
+border-bottom: 8px solid var(--wood-dark);
+
+}
+
+.floor  {
+
+position: absolute;
+
+top: 480px;
+
+left: 0;
+
+width: 100%;
+
+height: 220px;
+
+}
+
+/* Main Room Decor */ #room-main .wall  {
+
+background: repeating-linear-gradient(90deg, var(--wall-main), var(--wall-main) 40px, var(--wall-stripe) 40px, var(--wall-stripe) 80px);
+
+box-shadow: inset 0 -40px 40px rgba(0,0,0,0.05);
+
+}
+
+#room-main .wall::after  {
+
+content:'';
+
+position:absolute;
+
+bottom:0;
+
+left:0;
+
+width:100%;
+
+height:25px;
+
+background: var(--wood);
+
+border-top: 3px solid var(--wood-light);
+
+box-shadow: inset 0 5px 5px rgba(0,0,0,0.2);
+
+}
+
+/* Baseboard */ #room-main .floor  {
+
+background: repeating-linear-gradient(0deg, var(--wood) 0px, var(--wood) 18px, var(--wood-dark) 18px, var(--wood-dark) 20px), repeating-linear-gradient(90deg, transparent 0, transparent 80px, rgba(0,0,0,0.1) 80px, rgba(0,0,0,0.1) 82px);
+
+background-color: var(--wood);
+
+box-shadow: inset 0 30px 30px rgba(0,0,0,0.3);
+
+perspective: 1000px;
+
+}
+
+/* Decorative Props */ .poster  {
+
+position: absolute;
+
+width: 60px;
+
+height: 80px;
+
+background: linear-gradient(135deg, #a8c0ff, #3f2b96);
+
+border: 3px solid #222;
+
+top: 150px;
+
+left: 200px;
+
+box-shadow: 2px 5px 10px rgba(0,0,0,0.2);
+
+border-radius: 2px;
+
+}
+
+.poster::after  {
+
+content:'✨';
+
+position:absolute;
+
+top:20px;
+
+left:15px;
+
+font-size: 20px;
+
+color:white;
+
+}
+
+.rug  {
+
+position: absolute;
+
+width: 200px;
+
+height: 60px;
+
+background: var(--accent-pink-dark);
+
+border-radius: 50%;
+
+bottom: 80px;
+
+left: 450px;
+
+transform: scaleY(0.5);
+
+box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+
+opacity: 0.8;
+
+z-index: 1;
+
+border: 4px dashed #fff;
+
+}
+
+.plant  {
+
+position: absolute;
+
+width: 40px;
+
+height: 50px;
+
+background: var(--wood-dark);
+
+bottom: 220px;
+
+left: 800px;
+
+border-radius: 5px 5px 20px 20px;
+
+border: 3px solid #111;
+
+z-index: 5;
+
+}
+
+.plant-leaf  {
+
+position: absolute;
+
+width: 30px;
+
+height: 30px;
+
+background: #27ae60;
+
+border-radius: 0 30px 0 30px;
+
+border: 2px solid #111;
+
+top: -20px;
+
+left: -10px;
+
+transform: rotate(-30deg);
+
+box-shadow: inset 5px 5px 0 #2ecc71;
+
+}
+
+.plant-leaf:nth-child(2)  {
+
+top: -25px;
+
+left: 15px;
+
+transform: rotate(40deg);
+
+}
+
+.plant-leaf:nth-child(3)  {
+
+top: -35px;
+
+left: 5px;
+
+transform: rotate(10deg);
+
+background: #2ecc71;
+
+box-shadow: inset 5px 5px 0 #27ae60;
+
+}
+
+/* Bathroom Decor */ #room-bathroom .wall  {
+
+background: repeating-linear-gradient(45deg, var(--wall-bath) 0, var(--wall-bath) 20px, var(--tile-bath) 20px, var(--tile-bath) 40px);
+
+border-bottom: 8px solid #95a5a6;
+
+}
+
+#room-bathroom .floor  {
+
+background: repeating-conic-gradient(#bdc3c7 0% 25%, #ecf0f1 0% 50%) 50% / 40px 40px;
+
+box-shadow: inset 0 20px 30px rgba(0,0,0,0.2);
+
+}
+
+/* Depot Decor */ #room-depot .wall  {
+
+background: repeating-linear-gradient(0deg, #111, #111 2px, transparent 2px, transparent 10px), linear-gradient(to bottom, #1a1a2e, #0f0f1a);
+
+border-bottom: 8px solid #000;
+
+}
+
+#room-depot .floor  {
+
+background: repeating-linear-gradient(45deg, #222 0, #222 20px, #1a1a1a 20px, #1a1a1a 40px);
+
+border-top: 2px solid #f1c40f;
+
+box-shadow: inset 0 30px 40px rgba(0,0,0,0.8);
+
+}
+
+/* ========================================= INTERACTABLE OBJECTS (HIGH DETAIL) ========================================= */ .solid-obj  {
+
+position: absolute;
+
+transform-origin: bottom center;
+
+transition: filter 0.2s, transform 0.1s;
+
+cursor: pointer;
+
+}
+
+.solid-obj:hover  {
+
+filter: brightness(1.15) drop-shadow(0 0 5px rgba(255,255,255,0.3));
+
+transform: scale(1.02);
+
+}
+
+.solid-obj:active  {
+
+transform: scale(0.98);
+
+}
+
+/* BED */ #obj-bed  {
+
+width: 160px;
+
+height: 90px;
+
+bottom: 160px;
+
+left: 100px;
+
+z-index: 10;
+
+}
+
+.bed-frame  {
+
+position: absolute;
+
+width: 100%;
+
+height: 40px;
+
+background: var(--wood);
+
+border: 3px solid #111;
+
+bottom: 0;
+
+border-radius: 4px;
+
+box-shadow: inset 0 -10px 0 var(--wood-shadow), 0 10px 20px rgba(0,0,0,0.5);
+
+}
+
+.bed-headboard  {
+
+position: absolute;
+
+width: 20px;
+
+height: 90px;
+
+background: var(--wood);
+
+border: 3px solid #111;
+
+bottom: 0;
+
+left: 0;
+
+border-radius: 8px 0 0 0;
+
+box-shadow: inset -5px 0 0 var(--wood-shadow);
+
+}
+
+.bed-headboard::after  {
+
+content:'';
+
+position:absolute;
+
+top:10px;
+
+left:4px;
+
+width:6px;
+
+height:70px;
+
+background: var(--wood-light);
+
+border-radius: 3px;
+
+}
+
+.bed-footboard  {
+
+position: absolute;
+
+width: 15px;
+
+height: 60px;
+
+background: var(--wood);
+
+border: 3px solid #111;
+
+bottom: 0;
+
+right: 0;
+
+border-radius: 0 8px 0 0;
+
+box-shadow: inset -4px 0 0 var(--wood-shadow);
+
+}
+
+.bed-mattress  {
+
+position: absolute;
+
+width: 140px;
+
+height: 35px;
+
+background: #fff;
+
+border: 3px solid #111;
+
+bottom: 35px;
+
+left: 10px;
+
+border-radius: 5px;
+
+box-shadow: inset 0 -8px 0 #ddd;
+
+}
+
+.bed-blanket  {
+
+position: absolute;
+
+width: 100px;
+
+height: 37px;
+
+background: var(--accent-pink);
+
+border: 3px solid #111;
+
+border-left: none;
+
+bottom: 35px;
+
+right: 5px;
+
+border-radius: 0 5px 5px 0;
+
+box-shadow: inset 0 -10px 0 rgba(0,0,0,0.1);
+
+background-image: radial-gradient(circle, rgba(255,255,255,0.5) 3px, transparent 3px);
+
+background-size: 15px 15px;
+
+}
+
+.bed-blanket::before  {
+
+content:'';
+
+position:absolute;
+
+left:-10px;
+
+top:-3px;
+
+width:20px;
+
+height:40px;
+
+background: var(--accent-pink-dark);
+
+border-radius: 50%;
+
+border: 3px solid #111;
+
+}
+
+/* Fold */ .bed-pillow  {
+
+position: absolute;
+
+width: 35px;
+
+height: 20px;
+
+background: #fff;
+
+border: 3px solid #111;
+
+bottom: 50px;
+
+left: 25px;
+
+border-radius: 10px;
+
+box-shadow: inset -5px -5px 0 #eee;
+
+transform: rotate(-5deg);
+
+}
+
+.bed-pillow:nth-child(6)  {
+
+left: 45px;
+
+bottom: 45px;
+
+transform: rotate(10deg);
+
+z-index: -1;
+
+}
+
+/* DESK & PC */ #obj-desk  {
+
+width: 140px;
+
+height: 100px;
+
+bottom: 200px;
+
+left: 320px;
+
+z-index: 60;
+
+}
+
+.desk-top  {
+
+position: absolute;
+
+width: 100%;
+
+height: 15px;
+
+background: var(--wood-light);
+
+border: 3px solid #111;
+
+top: 30px;
+
+border-radius: 4px;
+
+box-shadow: inset 0 -5px 0 var(--wood), 0 5px 10px rgba(0,0,0,0.3);
+
+z-index: 5;
+
+}
+
+.desk-leg-l, .desk-leg-r  {
+
+position: absolute;
+
+width: 12px;
+
+height: 55px;
+
+background: #333;
+
+border: 3px solid #111;
+
+bottom: 0;
+
+box-shadow: inset -3px 0 0 #111;
+
+z-index: 4;
+
+}
+
+.desk-leg-l  {
+
+left: 10px;
+
+}
+
+.desk-leg-r  {
+
+right: 10px;
+
+}
+
+.desk-pc-case  {
+
+position: absolute;
+
+width: 35px;
+
+height: 50px;
+
+background: #222;
+
+border: 3px solid #111;
+
+bottom: 0;
+
+left: 25px;
+
+z-index: 6;
+
+border-radius: 4px;
+
+box-shadow: inset -5px 0 0 #000;
+
+overflow: hidden;
+
+}
+
+.desk-pc-glass  {
+
+position: absolute;
+
+width: 20px;
+
+height: 40px;
+
+background: rgba(0,255,255,0.1);
+
+border: 2px solid #444;
+
+top: 3px;
+
+left: 3px;
+
+border-radius: 2px;
+
+}
+
+.pc-fan  {
+
+position: absolute;
+
+width: 12px;
+
+height: 12px;
+
+border-radius: 50%;
+
+border: 2px solid #111;
+
+border-top-color: #f0f;
+
+border-right-color: #0ff;
+
+animation: spin 0.2s linear infinite;
+
+left: 3px;
+
+}
+
+.pc-fan.f1  {
+
+top: 2px;
+
+}
+
+.pc-fan.f2  {
+
+top: 16px;
+
+}
+
+.pc-fan.f3  {
+
+top: 30px;
+
+}
+
+.desk-monitor-base  {
+
+position: absolute;
+
+width: 20px;
+
+height: 10px;
+
+background: #222;
+
+border: 3px solid #111;
+
+top: 20px;
+
+left: 60px;
+
+z-index: 4;
+
+}
+
+.desk-monitor  {
+
+position: absolute;
+
+width: 64px;
+
+height: 40px;
+
+background: #111;
+
+border: 3px solid #222;
+
+top: -15px;
+
+left: 38px;
+
+border-radius: 4px;
+
+z-index: 6;
+
+box-shadow: 0 5px 10px rgba(0,0,0,0.5);
+
+}
+
+.desk-screen  {
+
+position: absolute;
+
+width: 56px;
+
+height: 32px;
+
+background: linear-gradient(135deg, #001f3f, #00a8ff);
+
+top: 1px;
+
+left: 1px;
+
+border-radius: 2px;
+
+box-shadow: inset 0 0 10px #00a8ff;
+
+overflow: hidden;
+
+}
+
+.desk-screen::after  {
+
+content:'';
+
+position:absolute;
+
+width:100%;
+
+height:2px;
+
+background: rgba(255,255,255,0.8);
+
+top: 5px;
+
+box-shadow: 0 10px 0 rgba(255,255,255,0.5), 0 20px 0 rgba(255,255,255,0.3);
+
+animation: codeScroll 2s linear infinite;
+
+}
+
+.desk-keyboard  {
+
+position: absolute;
+
+width: 45px;
+
+height: 12px;
+
+background: #222;
+
+border: 2px solid #111;
+
+top: 20px;
+
+left: 45px;
+
+z-index: 6;
+
+transform: skewX(-20deg);
+
+border-radius: 2px;
+
+box-shadow: 0 0 5px #f0f, inset 0 2px 0 #555;
+
+}
+
+.desk-mouse  {
+
+position: absolute;
+
+width: 8px;
+
+height: 12px;
+
+background: #111;
+
+border: 2px solid #000;
+
+top: 22px;
+
+left: 95px;
+
+z-index: 6;
+
+border-radius: 4px;
+
+box-shadow: 0 0 5px #0ff;
+
+}
+
+.desk-chair  {
+
+position: absolute;
+
+width: 45px;
+
+height: 75px;
+
+bottom: -30px;
+
+left: 55px;
+
+z-index: 3;
+
+}
+
+/* Behind desk */ .chair-wheels  {
+
+position: absolute;
+
+width: 45px;
+
+height: 10px;
+
+background: #111;
+
+bottom: 0;
+
+border-radius: 5px;
+
+}
+
+.chair-pole  {
+
+position: absolute;
+
+width: 8px;
+
+height: 20px;
+
+background: #555;
+
+border: 2px solid #111;
+
+bottom: 10px;
+
+left: 16px;
+
+}
+
+.chair-seat  {
+
+position: absolute;
+
+width: 45px;
+
+height: 15px;
+
+background: #e84393;
+
+border: 3px solid #111;
+
+bottom: 25px;
+
+border-radius: 5px;
+
+box-shadow: inset 0 -5px 0 #c23616;
+
+}
+
+.chair-back  {
+
+position: absolute;
+
+width: 35px;
+
+height: 40px;
+
+background: #e84393;
+
+border: 3px solid #111;
+
+bottom: 35px;
+
+left: 2px;
+
+border-radius: 10px 10px 0 0;
+
+box-shadow: inset -5px 0 0 #c23616;
+
+}
+
+.chair-back::after  {
+
+content:'';
+
+position:absolute;
+
+width:15px;
+
+height:35px;
+
+background: #2d3436;
+
+top: 0;
+
+left: 10px;
+
+}
+
+/* Racing stripe */ @keyframes spin  {
+
+100%  {
+
+transform: rotate(360deg);
+
+}
+
+}
+
+@keyframes codeScroll  {
+
+0%  {
+
+transform: translateY(-10px);
+
+}
+
+100%  {
+
+transform: translateY(30px);
+
+}
+
+}
+
+/* TV & TABLE */ #obj-tv  {
+
+width: 110px;
+
+height: 120px;
+
+bottom: 150px;
+
+left: 680px;
+
+z-index: 10;
+
+}
+
+.tv-unit  {
+
+position: absolute;
+
+width: 110px;
+
+height: 35px;
+
+background: var(--wood-light);
+
+border: 3px solid #111;
+
+bottom: 0;
+
+border-radius: 4px;
+
+box-shadow: inset 0 -10px 0 var(--wood), 0 10px 15px rgba(0,0,0,0.4);
+
+}
+
+.tv-unit-shelf  {
+
+position: absolute;
+
+width: 90px;
+
+height: 10px;
+
+background: #222;
+
+top: 10px;
+
+left: 7px;
+
+border: 2px solid #111;
+
+border-radius: 2px;
+
+box-shadow: inset 0 5px 5px #000;
+
+}
+
+.tv-console  {
+
+position: absolute;
+
+width: 25px;
+
+height: 6px;
+
+background: #fff;
+
+border: 1px solid #111;
+
+top: 2px;
+
+left: 5px;
+
+box-shadow: inset 0 -2px 0 #ccc;
+
+}
+
+.tv-console::after  {
+
+content:'';
+
+position:absolute;
+
+width:3px;
+
+height:3px;
+
+background: #0f0;
+
+top: 1px;
+
+right: 2px;
+
+border-radius: 50%;
+
+}
+
+.tv-pole  {
+
+position: absolute;
+
+width: 15px;
+
+height: 15px;
+
+background: #222;
+
+border: 3px solid #111;
+
+bottom: 35px;
+
+left: 44px;
+
+}
+
+.tv-monitor  {
+
+position: absolute;
+
+width: 100px;
+
+height: 65px;
+
+background: #111;
+
+border: 3px solid #222;
+
+top: 5px;
+
+left: 2px;
+
+border-radius: 5px;
+
+box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+
+}
+
+.tv-screen  {
+
+position: absolute;
+
+width: 92px;
+
+height: 57px;
+
+background: linear-gradient(45deg, #111, #333);
+
+top: 1px;
+
+left: 1px;
+
+border-radius: 2px;
+
+overflow: hidden;
+
+animation: tvGlow 3s infinite alternate;
+
+}
+
+.tv-screen::before  {
+
+content:'';
+
+position:absolute;
+
+width:150%;
+
+height:100%;
+
+background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+
+transform: skewX(-20deg);
+
+animation: tvShine 4s infinite;
+
+}
+
+@keyframes tvGlow  {
+
+from  {
+
+box-shadow: inset 0 0 10px rgba(255,255,255,0.1);
+
+}
+
+to  {
+
+box-shadow: inset 0 0 30px rgba(255,255,255,0.3);
+
+}
+
+}
+
+@keyframes tvShine  {
+
+0%  {
+
+left: -150%;
+
+}
+
+100%  {
+
+left: 150%;
+
+}
+
+}
+
+#obj-table  {
+
+width: 90px;
+
+height: 60px;
+
+bottom: 130px;
+
+left: 500px;
+
+z-index: 15;
+
+}
+
+.table-top  {
+
+position: absolute;
+
+width: 90px;
+
+height: 35px;
+
+background: var(--wood);
+
+border: 3px solid #111;
+
+top: 0;
+
+border-radius: 45px / 17px;
+
+box-shadow: inset 0 -8px 0 var(--wood-dark), 0 10px 15px rgba(0,0,0,0.4);
+
+z-index: 3;
+
+}
+
+.table-leg  {
+
+position: absolute;
+
+width: 10px;
+
+height: 35px;
+
+background: var(--wood-dark);
+
+border: 3px solid #111;
+
+bottom: 0;
+
+z-index: 1;
+
+border-radius: 0 0 5px 5px;
+
+}
+
+.table-leg.l  {
+
+left: 15px;
+
+}
+
+.table-leg.r  {
+
+right: 15px;
+
+}
+
+.table-cup  {
+
+position: absolute;
+
+width: 14px;
+
+height: 16px;
+
+background: #fff;
+
+border: 2px solid #111;
+
+border-radius: 4px;
+
+top: 5px;
+
+left: 40px;
+
+z-index: 4;
+
+box-shadow: inset -3px -3px 0 #eee, 3px 5px 5px rgba(0,0,0,0.2);
+
+}
+
+.table-cup::before  {
+
+content:'';
+
+position:absolute;
+
+width:8px;
+
+height:10px;
+
+border: 2px solid #111;
+
+border-radius: 5px;
+
+right: -6px;
+
+top: 1px;
+
+z-index: -1;
+
+}
+
+/* Handle */ .table-steam  {
+
+position: absolute;
+
+width: 4px;
+
+height: 10px;
+
+background: rgba(255,255,255,0.6);
+
+top: -12px;
+
+left: 3px;
+
+border-radius: 5px;
+
+filter: blur(1px);
+
+animation: steam 1.5s infinite;
+
+}
+
+@keyframes steam  {
+
+0%  {
+
+transform: translateY(0) scale(1);
+
+opacity: 1;
+
+}
+
+100%  {
+
+transform: translateY(-15px) scale(2);
+
+opacity: 0;
+
+}
+
+}
+
+/* DOORS */ .door  {
+
+width: 76px;
+
+height: 140px;
+
+background: var(--wood-dark);
+
+border: 4px solid #111;
+
+border-bottom: none;
+
+bottom: 200px;
+
+z-index: 1;
+
+border-radius: 5px 5px 0 0;
+
+box-shadow: inset 0 0 20px rgba(0,0,0,0.8), 5px 0 10px rgba(0,0,0,0.3);
+
+overflow: hidden;
+
+}
+
+.door::before  {
+
+content:'';
+
+position:absolute;
+
+width: 50px;
+
+height: 60px;
+
+border: 3px solid #111;
+
+top: 10px;
+
+left: 9px;
+
+border-radius: 3px;
+
+box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+
+}
+
+.door::after  {
+
+content:'';
+
+position:absolute;
+
+width: 50px;
+
+height: 50px;
+
+border: 3px solid #111;
+
+bottom: 10px;
+
+left: 9px;
+
+border-radius: 3px;
+
+box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+
+}
+
+.door-knob  {
+
+position: absolute;
+
+width: 8px;
+
+height: 15px;
+
+background: gold;
+
+border: 2px solid #111;
+
+top: 75px;
+
+right: 8px;
+
+border-radius: 4px;
+
+box-shadow: inset -2px -2px 0 #b8860b;
+
+z-index: 2;
+
+}
+
+#door-bathroom  {
+
+left: 20px;
+
+}
+
+#door-depot  {
+
+left: 830px;
+
+}
+
+/* BATHROOM FURNITURE */ #obj-mirror  {
+
+position: absolute;
+
+width: 50px;
+
+height: 60px;
+
+background: linear-gradient(135deg, #e0f7fa, #80deea);
+
+border: 4px solid #bdc3c7;
+
+bottom: 240px;
+
+left: 325px;
+
+z-index: 1;
+
+border-radius: 50% 50% 5px 5px;
+
+box-shadow: 0 10px 15px rgba(0,0,0,0.2), inset 0 0 10px rgba(255,255,255,0.8);
+
+overflow: hidden;
+
+}
+
+#obj-mirror::after  {
+
+content:'';
+
+position:absolute;
+
+width:20px;
+
+height:70px;
+
+background: rgba(255,255,255,0.6);
+
+transform: rotate(30deg);
+
+top: -5px;
+
+left: 10px;
+
+}
+
+#obj-sink  {
+
+width: 70px;
+
+height: 85px;
+
+bottom: 150px;
+
+left: 315px;
+
+z-index: 10;
+
+}
+
+.sink-cabinet  {
+
+position: absolute;
+
+width: 100%;
+
+height: 50px;
+
+background: var(--wood);
+
+border: 3px solid #111;
+
+bottom: 0;
+
+border-radius: 2px;
+
+box-shadow: inset 0 -10px 0 var(--wood-dark), 0 10px 10px rgba(0,0,0,0.3);
+
+}
+
+.sink-cabinet::after  {
+
+content:'';
+
+position:absolute;
+
+width:2px;
+
+height:40px;
+
+background:#111;
+
+left:32px;
+
+top:0;
+
+}
+
+/* Door split */ .sink-basin  {
+
+position: absolute;
+
+width: 100%;
+
+height: 25px;
+
+background: #fff;
+
+border: 3px solid #111;
+
+top: 10px;
+
+border-radius: 5px;
+
+box-shadow: inset 0 -8px 0 #ddd;
+
+}
+
+.sink-bowl  {
+
+position: absolute;
+
+width: 50px;
+
+height: 12px;
+
+background: #eee;
+
+border: 2px solid #111;
+
+top: 15px;
+
+left: 8px;
+
+border-radius: 10px;
+
+box-shadow: inset 0 5px 5px #ccc;
+
+}
+
+.sink-faucet  {
+
+position: absolute;
+
+width: 6px;
+
+height: 15px;
+
+background: #bdc3c7;
+
+border: 2px solid #111;
+
+top: -2px;
+
+left: 30px;
+
+border-radius: 5px 5px 0 0;
+
+}
+
+.sink-faucet::after  {
+
+content:'';
+
+position:absolute;
+
+width:15px;
+
+height:6px;
+
+background:#bdc3c7;
+
+border:2px solid #111;
+
+top:0;
+
+left:-2px;
+
+border-radius:3px;
+
+}
+
+#obj-toilet  {
+
+width: 55px;
+
+height: 75px;
+
+bottom: 150px;
+
+left: 100px;
+
+z-index: 10;
+
+}
+
+.toilet-tank  {
+
+position: absolute;
+
+width: 45px;
+
+height: 35px;
+
+background: #fff;
+
+border: 3px solid #111;
+
+top: 0;
+
+left: 5px;
+
+border-radius: 5px;
+
+box-shadow: inset -5px -5px 0 #ddd, 0 5px 10px rgba(0,0,0,0.2);
+
+}
+
+.toilet-button  {
+
+position: absolute;
+
+width: 8px;
+
+height: 4px;
+
+background: #bdc3c7;
+
+border: 2px solid #111;
+
+top: 5px;
+
+right: 5px;
+
+border-radius: 2px;
+
+}
+
+.toilet-bowl  {
+
+position: absolute;
+
+width: 55px;
+
+height: 25px;
+
+background: #fff;
+
+border: 3px solid #111;
+
+top: 30px;
+
+left: 0;
+
+border-radius: 25px;
+
+box-shadow: inset 0 -8px 0 #ddd;
+
+}
+
+.toilet-base  {
+
+position: absolute;
+
+width: 35px;
+
+height: 20px;
+
+background: #eee;
+
+border: 3px solid #111;
+
+bottom: 0;
+
+left: 10px;
+
+border-radius: 0 0 10px 10px;
+
+box-shadow: inset -5px 0 0 #ccc;
+
+}
+
+.toilet-paper  {
+
+position: absolute;
+
+width: 14px;
+
+height: 18px;
+
+background: #fff;
+
+border: 2px solid #111;
+
+top: 10px;
+
+left: -12px;
+
+border-radius: 2px;
+
+box-shadow: inset -3px -3px 0 #ddd;
+
+}
+
+.toilet-paper::before  {
+
+content:'';
+
+position:absolute;
+
+width:4px;
+
+height:18px;
+
+background:#bdc3c7;
+
+left:-4px;
+
+top:-2px;
+
+border:2px solid #111;
+
+}
+
+#obj-washing-machine  {
+
+width: 75px;
+
+height: 85px;
+
+bottom: 150px;
+
+left: 500px;
+
+z-index: 10;
+
+display: none;
+
+}
+
+.wm-body  {
+
+position: absolute;
+
+width: 100%;
+
+height: 100%;
+
+background: #fff;
+
+border: 3px solid #111;
+
+border-radius: 5px;
+
+box-shadow: inset -10px -10px 0 #ddd, 0 10px 15px rgba(0,0,0,0.3);
+
+}
+
+.wm-panel  {
+
+position: absolute;
+
+width: 100%;
+
+height: 20px;
+
+background: #eee;
+
+border-bottom: 3px solid #111;
+
+top: 0;
+
+left: 0;
+
+border-radius: 5px 5px 0 0;
+
+}
+
+.wm-knob  {
+
+position: absolute;
+
+width: 10px;
+
+height: 10px;
+
+background: #555;
+
+border: 2px solid #111;
+
+border-radius: 50%;
+
+top: 3px;
+
+left: 10px;
+
+}
+
+.wm-drawer  {
+
+position: absolute;
+
+width: 25px;
+
+height: 10px;
+
+background: #fff;
+
+border: 2px solid #111;
+
+top: 3px;
+
+right: 5px;
+
+border-radius: 2px;
+
+}
+
+.wm-door  {
+
+position: absolute;
+
+width: 46px;
+
+height: 46px;
+
+background: #e0f7fa;
+
+border: 4px solid #555;
+
+border-radius: 50%;
+
+top: 30px;
+
+left: 10px;
+
+box-shadow: inset 0 5px 15px rgba(0,0,0,0.5);
+
+overflow: hidden;
+
+}
+
+.wm-door::after  {
+
+content:'';
+
+position:absolute;
+
+width:100%;
+
+height:50%;
+
+background: rgba(255,255,255,0.3);
+
+top:0;
+
+left:0;
+
+}
+
+.wm-clothes  {
+
+position: absolute;
+
+width: 30px;
+
+height: 20px;
+
+background: var(--accent-pink);
+
+border-radius: 50%;
+
+bottom: 5px;
+
+left: 5px;
+
+animation: spin 2s linear infinite;
+
+}
+
+#obj-shower  {
+
+width: 120px;
+
+height: 190px;
+
+bottom: 150px;
+
+left: 680px;
+
+z-index: 5;
+
+}
+
+.shower-base  {
+
+position: absolute;
+
+width: 100%;
+
+height: 15px;
+
+background: #fff;
+
+border: 3px solid #111;
+
+bottom: 0;
+
+border-radius: 2px;
+
+box-shadow: inset 0 -5px 0 #ddd, 0 10px 10px rgba(0,0,0,0.4);
+
+}
+
+.shower-glass  {
+
+position: absolute;
+
+width: 100%;
+
+height: 175px;
+
+background: rgba(200, 230, 250, 0.15);
+
+border: 4px solid #bdc3c7;
+
+bottom: 15px;
+
+border-radius: 4px 4px 0 0;
+
+box-shadow: inset 0 0 20px rgba(255,255,255,0.5);
+
+backdrop-filter: blur(2px);
+
+overflow: hidden;
+
+}
+
+.shower-glass::after  {
+
+content:'';
+
+position:absolute;
+
+width:30px;
+
+height:200px;
+
+background: linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent);
+
+transform: rotate(20deg);
+
+top:-10px;
+
+left: 20px;
+
+}
+
+.shower-fixture  {
+
+position: absolute;
+
+width: 8px;
+
+height: 80px;
+
+background: #bdc3c7;
+
+border: 2px solid #111;
+
+top: 10px;
+
+left: 50px;
+
+}
+
+.shower-head  {
+
+position: absolute;
+
+width: 30px;
+
+height: 10px;
+
+background: #95a5a6;
+
+border: 2px solid #111;
+
+top: 10px;
+
+left: 55px;
+
+transform: rotate(30deg);
+
+border-radius: 5px;
+
+}
+
+/* DEPOT FURNITURE */ #obj-server-rack  {
+
+width: 90px;
+
+height: 170px;
+
+bottom: 150px;
+
+left: 120px;
+
+z-index: 5;
+
+}
+
+.rack-frame  {
+
+position: absolute;
+
+width: 100%;
+
+height: 100%;
+
+background: #111;
+
+border: 4px solid #333;
+
+border-radius: 4px;
+
+box-shadow: inset 0 0 30px rgba(0,0,0,0.9), 10px 10px 20px rgba(0,0,0,0.5);
+
+}
+
+.rack-server  {
+
+position: absolute;
+
+width: 80px;
+
+height: 20px;
+
+background: #222;
+
+border: 2px solid #000;
+
+left: 1px;
+
+border-radius: 2px;
+
+box-shadow: inset 0 5px 5px rgba(255,255,255,0.1);
+
+}
+
+.rack-server.s1  {
+
+top: 10px;
+
+}
+
+.rack-server.s2  {
+
+top: 40px;
+
+}
+
+.rack-server.s3  {
+
+top: 70px;
+
+}
+
+.rack-server.s4  {
+
+top: 100px;
+
+}
+
+.rack-led  {
+
+position: absolute;
+
+width: 6px;
+
+height: 6px;
+
+border-radius: 50%;
+
+top: 5px;
+
+right: 5px;
+
+animation: blinkLed 0.5s infinite alternate;
+
+}
+
+.rack-led2  {
+
+position: absolute;
+
+width: 4px;
+
+height: 4px;
+
+border-radius: 50%;
+
+top: 6px;
+
+right: 15px;
+
+animation: blinkLed 0.3s infinite alternate-reverse;
+
+}
+
+.s1 .rack-led  {
+
+background: #0f0;
+
+box-shadow: 0 0 5px #0f0;
+
+}
+
+.s1 .rack-led2  {
+
+background: #0ff;
+
+box-shadow: 0 0 5px #0ff;
+
+}
+
+.s2 .rack-led  {
+
+background: #f00;
+
+box-shadow: 0 0 5px #f00;
+
+animation-duration: 0.8s;
+
+}
+
+.s2 .rack-led2  {
+
+background: #ff0;
+
+box-shadow: 0 0 5px #ff0;
+
+}
+
+.s3 .rack-led  {
+
+background: #0f0;
+
+box-shadow: 0 0 5px #0f0;
+
+animation-duration: 0.2s;
+
+}
+
+.s4 .rack-led  {
+
+background: #0ff;
+
+box-shadow: 0 0 5px #0ff;
+
+}
+
+@keyframes blinkLed  {
+
+from  {
+
+opacity: 0.2;
+
+}
+
+to  {
+
+opacity: 1;
+
+}
+
+}
+
+#obj-miner  {
+
+width: 110px;
+
+height: 90px;
+
+bottom: 150px;
+
+left: 700px;
+
+z-index: 10;
+
+}
+
+.miner-body  {
+
+position: absolute;
+
+width: 100%;
+
+height: 100%;
+
+background: #333;
+
+border: 4px solid #111;
+
+border-radius: 5px;
+
+box-shadow: inset -10px -10px 0 #222, 0 10px 15px rgba(0,0,0,0.5);
+
+}
+
+.miner-grill  {
+
+position: absolute;
+
+width: 90%;
+
+height: 40px;
+
+background: #111;
+
+top: 10px;
+
+left: 5%;
+
+border-radius: 3px;
+
+display: flex;
+
+justify-content: space-around;
+
+align-items: center;
+
+}
+
+.miner-fan  {
+
+width: 25px;
+
+height: 25px;
+
+border-radius: 50%;
+
+border: 2px solid #555;
+
+border-top-color: #f9ca24;
+
+border-bottom-color: #f0932b;
+
+animation: spin 0.1s linear infinite;
+
+}
+
+.miner-pipe  {
+
+position: absolute;
+
+width: 10px;
+
+height: 30px;
+
+background: #bdc3c7;
+
+border: 2px solid #111;
+
+bottom: 10px;
+
+left: 10px;
+
+border-radius: 5px;
+
+}
+
+.miner-pipe:nth-child(4)  {
+
+left: 30px;
+
+}
+
+.miner-pipe:nth-child(5)  {
+
+left: 50px;
+
+}
+
+.miner-screen  {
+
+position: absolute;
+
+width: 30px;
+
+height: 15px;
+
+background: #000;
+
+border: 2px solid #111;
+
+bottom: 15px;
+
+right: 10px;
+
+border-radius: 2px;
+
+box-shadow: 0 0 5px #0f0;
+
+color: #0f0;
+
+font-size: 8px;
+
+line-height: 12px;
+
+text-align: center;
+
+font-family: monospace;
+
+}
+
+.miner-screen::after  {
+
+content:'MH/s';
+
+}
+
+#obj-oven  {
+
+width: 80px;
+
+height: 95px;
+
+bottom: 150px;
+
+left: 400px;
+
+z-index: 10;
+
+display: none;
+
+}
+
+.oven-body  {
+
+position: absolute;
+
+width: 100%;
+
+height: 100%;
+
+background: #ecf0f1;
+
+border: 3px solid #111;
+
+border-radius: 5px;
+
+box-shadow: inset -10px -10px 0 #bdc3c7, 0 10px 15px rgba(0,0,0,0.3);
+
+}
+
+.oven-top  {
+
+position: absolute;
+
+width: 100%;
+
+height: 15px;
+
+background: #34495e;
+
+border-bottom: 3px solid #111;
+
+top: 0;
+
+left: 0;
+
+border-radius: 4px 4px 0 0;
+
+}
+
+.oven-burner  {
+
+position: absolute;
+
+width: 15px;
+
+height: 5px;
+
+background: #e74c3c;
+
+border-radius: 50%;
+
+top: 5px;
+
+box-shadow: 0 0 5px #e74c3c;
+
+}
+
+.oven-burner.b1  {
+
+left: 10px;
+
+}
+
+.oven-burner.b2  {
+
+right: 10px;
+
+}
+
+.oven-door  {
+
+position: absolute;
+
+width: 60px;
+
+height: 50px;
+
+background: #2c3e50;
+
+border: 3px solid #111;
+
+top: 25px;
+
+left: 7px;
+
+border-radius: 5px;
+
+box-shadow: inset 0 0 15px #e67e22;
+
+}
+
+.oven-door::after  {
+
+content:'';
+
+position:absolute;
+
+width:40px;
+
+height:30px;
+
+background: rgba(255,255,255,0.2);
+
+top: 7px;
+
+left: 7px;
+
+border-radius: 2px;
+
+}
+
+.oven-handle  {
+
+position: absolute;
+
+width: 40px;
+
+height: 4px;
+
+background: #bdc3c7;
+
+border: 1px solid #111;
+
+top: 5px;
+
+left: 7px;
+
+border-radius: 2px;
+
+}
+
+.oven-knob  {
+
+position: absolute;
+
+width: 8px;
+
+height: 8px;
+
+background: #333;
+
+border-radius: 50%;
+
+top: -20px;
+
+border: 1px solid #111;
+
+}
+
+.oven-knob.k1  {
+
+left: 0;
+
+}
+
+.oven-knob.k2  {
+
+left: 15px;
+
+}
+
+.oven-knob.k3  {
+
+right: 0;
+
+}
+
+.glow-effect  {
+
+box-shadow: 0 0 30px var(--accent-pink), inset 0 0 20px var(--accent-pink) !important;
+
+animation: pulseGlow 2s infinite alternate;
+
+border-color: var(--accent-pink) !important;
+
+filter: brightness(1.2);
+
+}
+
+@keyframes pulseGlow  {
+
+from  {
+
+filter: brightness(1);
+
+}
+
+to  {
+
+filter: brightness(1.3);
+
+}
+
+}
+
+/* ========================================= CHARACTER RIG - HIGH DETAIL CSS ART ========================================= */ .neko-char  {
+
+position: absolute;
+
+bottom: 130px;
+
+left: 475px;
+
+width: 80px;
+
+height: 140px;
+
+z-index: 50;
+
+}
+
+.char-scaler  {
+
+width: 100%;
+
+height: 100%;
+
+position: relative;
+
+transition: transform 0.2s;
+
+transform-origin: bottom center;
+
+}
+
+/* Hair Back */ .neko-hair-back  {
+
+position: absolute;
+
+width: 90px;
+
+height: 100px;
+
+background: var(--neko-hair-shadow);
+
+border-radius: 45px 45px 20px 20px;
+
+top: -10px;
+
+left: -5px;
+
+border: 3px solid #111;
+
+z-index: 1;
+
+box-shadow: inset -10px -10px 0 rgba(0,0,0,0.1);
+
+}
+
+.neko-hair-back::after  {
+
+content:'';
+
+position:absolute;
+
+width: 100px;
+
+height: 40px;
+
+background: var(--neko-hair-shadow);
+
+border: 3px solid #111;
+
+border-top: none;
+
+border-radius: 0 0 50px 50px;
+
+bottom: -15px;
+
+left: -8px;
+
+clip-path: polygon(0 0, 100% 0, 80% 100%, 60% 80%, 40% 100%, 20% 80%, 0 100%);
+
+}
+
+/* Tail */ .neko-tail  {
+
+position: absolute;
+
+width: 50px;
+
+height: 20px;
+
+background: linear-gradient(90deg, var(--neko-hair), var(--neko-hair-light));
+
+border: 3px solid #111;
+
+border-radius: 10px;
+
+top: 90px;
+
+left: -30px;
+
+z-index: 0;
+
+transform-origin: right center;
+
+animation: tailWag 3s cubic-bezier(0.4, 0, 0.2, 1) infinite alternate;
+
+box-shadow: inset -3px -3px 0 rgba(0,0,0,0.2);
+
+}
+
+.neko-tail::after  {
+
+content:'';
+
+position:absolute;
+
+width: 15px;
+
+height: 100%;
+
+background: #fff;
+
+right: 5px;
+
+top:0;
+
+border-radius: 5px;
+
+opacity: 0.5;
+
+}
+
+/* Fluff mark */ /* Head & Face */ .neko-head  {
+
+position: absolute;
+
+width: 76px;
+
+height: 66px;
+
+background: var(--neko-skin);
+
+border: 3px solid #111;
+
+border-radius: 38px 38px 25px 25px;
+
+top: 0;
+
+left: 2px;
+
+z-index: 3;
+
+box-sizing: border-box;
+
+box-shadow: inset -5px -5px 10px var(--neko-skin-shadow);
+
+}
+
+/* Detailed Ears */ .neko-ear  {
+
+position: absolute;
+
+width: 30px;
+
+height: 34px;
+
+background: var(--neko-hair);
+
+border: 3px solid #111;
+
+top: -18px;
+
+z-index: 2;
+
+border-radius: 5px 25px 5px 25px;
+
+overflow: hidden;
+
+box-shadow: inset 0 5px 5px rgba(255,255,255,0.5);
+
+}
+
+.neko-ear.left  {
+
+left: -8px;
+
+transform: rotate(-25deg);
+
+}
+
+.neko-ear.right  {
+
+right: -8px;
+
+transform: rotate(25deg) scaleX(-1);
+
+}
+
+.neko-ear-inner  {
+
+position: absolute;
+
+width: 18px;
+
+height: 22px;
+
+background: #ff7675;
+
+bottom: 0;
+
+left: 6px;
+
+border-radius: 5px 15px 0 0;
+
+border: 2px solid #111;
+
+border-bottom: none;
+
+box-shadow: inset 0 3px 5px rgba(0,0,0,0.2);
+
+}
+
+.neko-ear-fluff  {
+
+position: absolute;
+
+width: 15px;
+
+height: 15px;
+
+background: #fff;
+
+border-radius: 50%;
+
+bottom: 0;
+
+left: 0;
+
+filter: blur(1px);
+
+}
+
+/* Detailed Eyes */ .neko-eye  {
+
+position: absolute;
+
+width: 14px;
+
+height: 18px;
+
+background: linear-gradient(180deg, var(--neko-eye-top), var(--neko-eye-bot));
+
+border-radius: 50%;
+
+top: 30px;
+
+border: 2px solid #111;
+
+overflow: hidden;
+
+animation: blink 4s infinite;
+
+box-shadow: 0 0 3px rgba(0,0,0,0.3);
+
+}
+
+.neko-eye::before  {
+
+content: '';
+
+position: absolute;
+
+width: 6px;
+
+height: 8px;
+
+background: #fff;
+
+border-radius: 50%;
+
+top: 2px;
+
+left: 2px;
+
+transform: rotate(-20deg);
+
+}
+
+/* Big highlight */ .neko-eye::after  {
+
+content: '';
+
+position: absolute;
+
+width: 3px;
+
+height: 3px;
+
+background: #fff;
+
+border-radius: 50%;
+
+bottom: 3px;
+
+right: 3px;
+
+}
+
+/* Small highlight */ .neko-pupil  {
+
+position: absolute;
+
+width: 6px;
+
+height: 10px;
+
+background: #111;
+
+border-radius: 50%;
+
+top: 4px;
+
+left: 4px;
+
+}
+
+.neko-eye.left  {
+
+left: 12px;
+
+}
+
+.neko-eye.right  {
+
+right: 12px;
+
+}
+
+.neko-eyelash  {
+
+position: absolute;
+
+width: 18px;
+
+height: 6px;
+
+border-top: 3px solid #111;
+
+border-radius: 50%;
+
+top: 27px;
+
+}
+
+.neko-eyelash.left  {
+
+left: 10px;
+
+transform: rotate(-10deg);
+
+}
+
+.neko-eyelash.right  {
+
+right: 10px;
+
+transform: rotate(10deg);
+
+}
+
+/* Blush & Mouth */ .neko-blush  {
+
+position: absolute;
+
+width: 14px;
+
+height: 6px;
+
+background: #ff7675;
+
+border-radius: 50%;
+
+top: 42px;
+
+opacity: 0.6;
+
+filter: blur(1px);
+
+}
+
+.neko-blush.left  {
+
+left: 6px;
+
+}
+
+.neko-blush.right  {
+
+right: 6px;
+
+}
+
+.neko-mouth  {
+
+position: absolute;
+
+width: 8px;
+
+height: 5px;
+
+border-bottom: 2px solid #111;
+
+border-radius: 0 0 50% 50%;
+
+top: 45px;
+
+left: 31px;
+
+}
+
+/* Complex Hair Bangs */ .neko-hair-front  {
+
+position: absolute;
+
+width: 84px;
+
+height: 45px;
+
+top: -5px;
+
+left: -7px;
+
+z-index: 5;
+
+}
+
+.bang  {
+
+position: absolute;
+
+background: var(--neko-hair);
+
+border: 2px solid #111;
+
+border-top: none;
+
+}
+
+.bang.c  {
+
+width: 30px;
+
+height: 35px;
+
+top: 0;
+
+left: 27px;
+
+border-radius: 0 0 15px 15px;
+
+box-shadow: inset 0 -5px 0 var(--neko-hair-shadow);
+
+}
+
+.bang.l  {
+
+width: 25px;
+
+height: 45px;
+
+top: 0;
+
+left: 5px;
+
+border-radius: 0 0 20px 5px;
+
+transform: rotate(15deg);
+
+box-shadow: inset -3px -5px 0 var(--neko-hair-shadow);
+
+}
+
+.bang.r  {
+
+width: 25px;
+
+height: 45px;
+
+top: 0;
+
+right: 5px;
+
+border-radius: 0 0 5px 20px;
+
+transform: rotate(-15deg);
+
+box-shadow: inset 3px -5px 0 var(--neko-hair-shadow);
+
+}
+
+.ahoge  {
+
+position: absolute;
+
+width: 20px;
+
+height: 30px;
+
+border-left: 3px solid var(--neko-hair);
+
+border-top: 3px solid var(--neko-hair);
+
+border-radius: 20px 0 0 0;
+
+top: -25px;
+
+left: 35px;
+
+transform: rotate(20deg);
+
+filter: drop-shadow(1px 0 0 #111) drop-shadow(-1px -1px 0 #111);
+
+}
+
+/* Body & Outfit */ .neko-body-container  {
+
+position: absolute;
+
+top: 62px;
+
+left: 22px;
+
+width: 36px;
+
+height: 45px;
+
+z-index: 2;
+
+}
+
+.neko-collar  {
+
+position: absolute;
+
+width: 26px;
+
+height: 12px;
+
+background: #ff4757;
+
+border: 3px solid #111;
+
+border-radius: 6px;
+
+top: -3px;
+
+left: 2px;
+
+z-index: 6;
+
+box-sizing: border-box;
+
+box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+
+}
+
+.neko-bell  {
+
+position: absolute;
+
+width: 12px;
+
+height: 12px;
+
+background: radial-gradient(circle at 30% 30%, #ffeaa7, #f39c12);
+
+border: 2px solid #111;
+
+border-radius: 50%;
+
+top: 6px;
+
+left: 9px;
+
+z-index: 7;
+
+box-shadow: 0 2px 3px rgba(0,0,0,0.4);
+
+}
+
+.neko-bell::after  {
+
+content:'';
+
+position:absolute;
+
+width: 6px;
+
+height: 2px;
+
+background: #111;
+
+top: 5px;
+
+left: 1px;
+
+border-radius: 1px;
+
+}
+
+.neko-torso  {
+
+position: absolute;
+
+width: 34px;
+
+height: 38px;
+
+background: linear-gradient(180deg, #fff, #dfe6e9);
+
+border: 3px solid #111;
+
+border-radius: 12px 12px 10px 10px;
+
+top: 5px;
+
+left: 1px;
+
+box-sizing: border-box;
+
+z-index: 3;
+
+box-shadow: inset -5px -5px 10px rgba(0,0,0,0.1);
+
+}
+
+.neko-chest  {
+
+position: absolute;
+
+width: 30px;
+
+height: 18px;
+
+background: #fff;
+
+border: 3px solid #111;
+
+border-radius: 15px;
+
+top: 12px;
+
+left: 3px;
+
+box-sizing: border-box;
+
+z-index: 4;
+
+box-shadow: 0 4px 5px rgba(0,0,0,0.1);
+
+}
+
+.neko-chest::after  {
+
+content:'';
+
+position:absolute;
+
+width: 4px;
+
+height: 8px;
+
+border-left: 2px solid #ccc;
+
+top: -2px;
+
+left: 10px;
+
+border-radius: 50%;
+
+}
+
+/* Cleavage line */ .neko-skirt  {
+
+position: absolute;
+
+width: 50px;
+
+height: 24px;
+
+background: linear-gradient(180deg, var(--accent-pink-dark), var(--accent-pink));
+
+border: 3px solid #111;
+
+border-radius: 10px 10px 3px 3px;
+
+top: 32px;
+
+left: -7px;
+
+box-sizing: border-box;
+
+z-index: 5;
+
+box-shadow: inset 0 -5px 5px rgba(0,0,0,0.2), 0 5px 5px rgba(0,0,0,0.3);
+
+}
+
+.neko-skirt::before  {
+
+content:'';
+
+position:absolute;
+
+width:100%;
+
+height: 100%;
+
+background: repeating-linear-gradient(90deg, transparent, transparent 8px, rgba(0,0,0,0.1) 8px, rgba(0,0,0,0.1) 10px);
+
+top:0;
+
+left:0;
+
+border-radius: inherit;
+
+}
+
+/* Pleats */ .neko-apron  {
+
+position: absolute;
+
+width: 30px;
+
+height: 15px;
+
+background: #fff;
+
+border: 2px solid #111;
+
+border-radius: 0 0 15px 15px;
+
+top: 30px;
+
+left: 3px;
+
+z-index: 6;
+
+box-shadow: inset 0 -3px 0 #ddd;
+
+}
+
+/* Articulated Limbs */ .neko-arm  {
+
+position: absolute;
+
+width: 14px;
+
+height: 32px;
+
+background: var(--neko-skin);
+
+border: 3px solid #111;
+
+border-radius: 7px;
+
+top: 66px;
+
+z-index: 4;
+
+box-sizing: border-box;
+
+box-shadow: inset -3px -3px 5px var(--neko-skin-shadow);
+
+}
+
+.neko-arm::after  {
+
+content:'';
+
+position:absolute;
+
+width: 16px;
+
+height: 10px;
+
+background: #fff;
+
+border: 2px solid #111;
+
+top: -2px;
+
+left: -3px;
+
+border-radius: 5px;
+
+box-shadow: 0 2px 0 rgba(0,0,0,0.1);
+
+}
+
+/* Puff sleeve */ .neko-arm.left  {
+
+left: 12px;
+
+transform: rotate(20deg);
+
+transform-origin: top center;
+
+}
+
+.neko-arm.right  {
+
+right: 12px;
+
+transform: rotate(-20deg);
+
+transform-origin: top center;
+
+}
+
+/* Bare Feet Detail */ .neko-leg  {
+
+position: absolute;
+
+width: 16px;
+
+height: 35px;
+
+background: var(--neko-skin);
+
+border: 3px solid #111;
+
+border-radius: 8px 8px 5px 5px;
+
+top: 105px;
+
+z-index: 1;
+
+box-sizing: border-box;
+
+box-shadow: inset -3px -3px 5px var(--neko-skin-shadow);
+
+}
+
+.neko-leg::after  {
+
+content: '';
+
+position: absolute;
+
+bottom: 2px;
+
+left: 3px;
+
+width: 4px;
+
+height: 5px;
+
+border-left: 1px solid rgba(0,0,0,0.4);
+
+border-right: 1px solid rgba(0,0,0,0.4);
+
+}
+
+/* Toes */ .neko-leg::before  {
+
+content: '';
+
+position: absolute;
+
+top: 15px;
+
+left: -2px;
+
+width: 14px;
+
+height: 4px;
+
+border-top: 2px solid var(--accent-pink-dark);
+
+border-radius: 50%;
+
+opacity: 0.8;
+
+}
+
+/* Anklet */ .neko-leg.left  {
+
+left: 24px;
+
+transform-origin: top center;
+
+}
+
+.neko-leg.right  {
+
+left: 40px;
+
+transform-origin: top center;
+
+}
+
+/* Censor Bar */ .censor-bar  {
+
+display: none;
+
+position: absolute;
+
+width: 50px;
+
+height: 55px;
+
+background-color: #fff;
+
+background-image: repeating-linear-gradient(45deg, #bbb 25%, transparent 25%, transparent 75%, #bbb 75%, #bbb), repeating-linear-gradient(45deg, #bbb 25%, transparent 25%, transparent 75%, #bbb 75%, #bbb);
+
+background-size: 10px 10px;
+
+background-position: 0 0, 5px 5px;
+
+border: 3px solid #111;
+
+z-index: 10;
+
+top: -5px;
+
+left: -7px;
+
+border-radius: 5px;
+
+opacity: 0.98;
+
+box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+
+}
+
+/* ========================================= ANIMATIONS & STATES ========================================= */ @keyframes blink  {
+
+0%, 96%, 98%  {
+
+transform: scaleY(1);
+
+}
+
+97%, 100%  {
+
+transform: scaleY(0.1);
+
+}
+
+}
+
+@keyframes tailWag  {
+
+from  {
+
+transform: rotate(-20deg);
+
+}
+
+to  {
+
+transform: rotate(30deg);
+
+}
+
+}
+
+@keyframes breathe  {
+
+0%, 100%  {
+
+transform: scaleY(1);
+
+}
+
+50%  {
+
+transform: scaleY(1.02);
+
+}
+
+}
+
+@keyframes bob  {
+
+0%, 100%  {
+
+transform: translateY(0);
+
+}
+
+50%  {
+
+transform: translateY(-4px);
+
+}
+
+}
+
+@keyframes bobHair  {
+
+0%, 100%  {
+
+transform: rotate(0deg);
+
+}
+
+50%  {
+
+transform: rotate(2deg);
+
+}
+
+}
+
+.state-idle .neko-torso  {
+
+animation: breathe 2s infinite;
+
+}
+
+.state-idle .neko-body-container, .state-idle .neko-head, .state-idle .neko-arm  {
+
+animation: bob 2s infinite ease-in-out;
+
+}
+
+.state-idle .neko-hair-front  {
+
+animation: bobHair 2s infinite;
+
+}
+
+@keyframes walk-swing-l  {
+
+0%, 100%  {
+
+transform: rotate(0deg);
+
+}
+
+25%  {
+
+transform: rotate(35deg);
+
+}
+
+75%  {
+
+transform: rotate(-35deg);
+
+}
+
+}
+
+@keyframes walk-swing-r  {
+
+0%, 100%  {
+
+transform: rotate(0deg);
+
+}
+
+25%  {
+
+transform: rotate(-35deg);
+
+}
+
+75%  {
+
+transform: rotate(35deg);
+
+}
+
+}
+
+@keyframes walk-bob  {
+
+0%, 50%, 100%  {
+
+transform: translateY(0);
+
+}
+
+25%, 75%  {
+
+transform: translateY(-6px);
+
+}
+
+}
+
+.state-walk .neko-leg.left  {
+
+animation: walk-swing-l 0.5s infinite;
+
+}
+
+.state-walk .neko-leg.right  {
+
+animation: walk-swing-r 0.5s infinite;
+
+}
+
+.state-walk .neko-body-container, .state-walk .neko-head, .state-walk .neko-arm, .state-walk .neko-tail  {
+
+animation: walk-bob 0.5s infinite;
+
+}
+
+.state-sit .neko-leg  {
+
+height: 16px;
+
+top: 96px;
+
+transform: rotate(-90deg);
+
+border-radius: 8px 8px 0 0;
+
+}
+
+.state-sit .neko-leg::after  {
+
+display: none;
+
+}
+
+.state-desk-sit  {
+
+z-index: 55 !important;
+
+bottom: 155px !important;
+
+}
+
+.state-desk-sit .neko-leg  {
+
+height: 16px;
+
+top: 96px;
+
+transform: rotate(-90deg);
+
+}
+
+.state-desk-sit .neko-leg::after  {
+
+display: none;
+
+}
+
+.state-sleep  {
+
+z-index: 12 !important;
+
+}
+
+.state-sleep .char-scaler  {
+
+transform: rotate(90deg) translate(30px, -80px) !important;
+
+}
+
+.state-sleep .neko-eye  {
+
+transform: scaleY(0.1) !important;
+
+animation: none;
+
+}
+
+.dizzy  {
+
+filter: sepia(0.5) hue-rotate(-30deg) brightness(0.8);
+
+}
+
+.dizzy .neko-body-container, .dizzy .neko-head  {
+
+animation: bob 0.5s infinite;
+
+}
+
+.state-shower  {
+
+z-index: 4 !important;
+
+bottom: 160px !important;
+
+}
+
+.state-shower .neko-torso, .state-shower .neko-chest  {
+
+background: var(--neko-skin) !important;
+
+border-color: #111 !important;
+
+box-shadow: inset -5px -5px 10px var(--neko-skin-shadow) !important;
+
+}
+
+.state-shower .neko-chest::after  {
+
+border-left: 2px solid var(--neko-skin-shadow);
+
+}
+
+.state-shower .neko-skirt, .state-shower .neko-collar, .state-shower .neko-apron, .state-shower .neko-bell, .state-shower .neko-arm::after  {
+
+display: none !important;
+
+}
+
+.state-shower .censor-bar  {
+
+display: block;
+
+}
+
+.state-shower .neko-arm.left  {
+
+transform: rotate(140deg) translate(-10px, -15px);
+
+}
+
+.state-shower .neko-arm.right  {
+
+transform: rotate(-140deg) translate(10px, -15px);
+
+}
+
+.state-shower .neko-eye  {
+
+transform: scaleY(0.2);
+
+animation: none;
+
+}
+
+/* ========================================= UI PANELS & MENUS ========================================= */ .ui-panel  {
+
+position: absolute;
+
+background: var(--ui-bg);
+
+border: 4px solid var(--ui-border);
+
+border-bottom: 8px solid var(--ui-border);
+
+border-radius: 12px;
+
+padding: 15px;
+
+z-index: 200;
+
+box-sizing: border-box;
+
+box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+
+text-shadow: 1px 1px 0 rgba(255,255,255,0.8);
+
+}
+
+#ui-top-left  {
+
+top: 20px;
+
+left: 20px;
+
+width: 220px;
+
+}
+
+#ui-top-center  {
+
+top: 20px;
+
+left: 365px;
+
+width: 220px;
+
+text-align: center;
+
+}
+
+#ui-top-right  {
+
+position: absolute;
+
+top: 20px;
+
+right: 20px;
+
+display: flex;
+
+gap: 10px;
+
+z-index: 200;
+
+}
+
+.stat-bar-container  {
+
+width: 100%;
+
+height: 18px;
+
+background: #dcdde1;
+
+border: 3px solid var(--ui-border);
+
+border-radius: 10px;
+
+position: relative;
+
+margin: 8px 0;
+
+overflow: hidden;
+
+box-shadow: inset 0 3px 5px rgba(0,0,0,0.3);
+
+}
+
+.stat-bar-fill  {
+
+height: 100%;
+
+transition: width 0.3s cubic-bezier(0.4,0,0.2,1);
+
+box-shadow: inset 0 -4px 0 rgba(0,0,0,0.2);
+
+}
+
+.stat-text  {
+
+position: absolute;
+
+top:1px;
+
+left:0;
+
+width: 100%;
+
+text-align: center;
+
+font-size: 11px;
+
+font-weight: 900;
+
+color: #fff;
+
+text-shadow: 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000;
+
+letter-spacing: 1px;
+
+}
+
+#ui-energy-fill  {
+
+background: linear-gradient(90deg, #44bd32, #4cd137);
+
+}
+
+#ui-hunger-fill  {
+
+background: linear-gradient(90deg, #e1b12c, #fbc531);
+
+}
+
+#ui-xp-fill  {
+
+background: linear-gradient(90deg, #0097e6, #00a8ff);
+
+}
+
+.action-btn  {
+
+display: block;
+
+width: 100%;
+
+padding: 8px 12px;
+
+margin: 4px 0;
+
+background: linear-gradient(180deg, var(--accent-pink), var(--accent-pink-dark));
+
+border: 3px solid var(--ui-border);
+
+border-bottom: 6px solid var(--ui-border);
+
+border-radius: 8px;
+
+cursor: pointer;
+
+font-weight: 900;
+
+font-size: 13px;
+
+color: #fff;
+
+text-shadow: 1px 1px 0 #000;
+
+transition: transform 0.1s, filter 0.2s;
+
+letter-spacing: 0.5px;
+
+box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+
+}
+
+.action-btn:hover:not(:disabled)  {
+
+filter: brightness(1.15);
+
+transform: translateY(-2px);
+
+box-shadow: 0 6px 8px rgba(0,0,0,0.3);
+
+}
+
+.action-btn:active:not(:disabled)  {
+
+border-bottom: 3px solid var(--ui-border);
+
+transform: translateY(3px);
+
+box-shadow: 0 0 0 rgba(0,0,0,0);
+
+margin-bottom: 7px;
+
+}
+
+.action-btn:disabled  {
+
+background: #7f8fa6;
+
+cursor: not-allowed;
+
+color:#dcdde1;
+
+text-shadow:none;
+
+}
+
+.action-btn.btn-icon  {
+
+width: auto;
+
+padding: 8px 15px;
+
+font-size: 16px;
+
+}
+
+#side-menu  {
+
+position: absolute;
+
+top: 0;
+
+right: -350px;
+
+width: 330px;
+
+height: 100%;
+
+background: var(--ui-bg);
+
+border-left: 6px solid var(--ui-border);
+
+z-index: 400;
+
+transition: right 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+
+padding: 25px;
+
+box-sizing: border-box;
+
+overflow-y: auto;
+
+box-shadow: -15px 0 30px rgba(0,0,0,0.6);
+
+}
+
+#side-menu.open  {
+
+right: 0;
+
+}
+
+.close-btn  {
+
+position: absolute;
+
+top: 15px;
+
+right: 15px;
+
+background: #e84118;
+
+color: #fff;
+
+border: 3px solid var(--ui-border);
+
+border-bottom: 6px solid var(--ui-border);
+
+border-radius: 8px;
+
+cursor: pointer;
+
+font-weight: 900;
+
+padding: 8px 12px;
+
+font-size: 16px;
+
+}
+
+.close-btn:active  {
+
+border-bottom: 3px solid var(--ui-border);
+
+transform: translateY(3px);
+
+}
+
+.tabs  {
+
+margin-top: 30px;
+
+display: flex;
+
+gap: 5px;
+
+}
+
+.tabs button  {
+
+flex:1;
+
+padding: 8px 5px;
+
+background: #dcdde1;
+
+border: 3px solid var(--ui-border);
+
+cursor: pointer;
+
+font-weight: bold;
+
+font-size: 12px;
+
+border-bottom: 5px solid var(--ui-border);
+
+border-radius: 6px;
+
+transition: background 0.2s;
+
+}
+
+.tabs button:active  {
+
+border-bottom: 2px solid var(--ui-border);
+
+transform:translateY(3px);
+
+}
+
+.tabs button:hover  {
+
+background: #f5f6fa;
+
+}
+
+.tab-content  {
+
+display: none;
+
+margin-top: 20px;
+
+font-size: 15px;
+
+background: #fff;
+
+border: 3px solid var(--ui-border);
+
+border-radius: 8px;
+
+padding: 15px;
+
+box-shadow: inset 0 5px 10px rgba(0,0,0,0.05);
+
+}
+
+.tab-content.active  {
+
+display: block;
+
+animation: fadeIn 0.3s;
+
+}
+
+.upgrade-btn  {
+
+display: block;
+
+width: 100%;
+
+margin-bottom: 12px;
+
+padding: 10px;
+
+background: linear-gradient(180deg, var(--accent-pink), var(--accent-pink-dark));
+
+border: 3px solid var(--ui-border);
+
+border-bottom: 6px solid var(--ui-border);
+
+font-weight: 900;
+
+cursor: pointer;
+
+border-radius: 8px;
+
+font-size: 13px;
+
+color: #fff;
+
+text-shadow: 1px 1px 0 #000;
+
+box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+
+}
+
+.upgrade-btn:hover:not(:disabled)  {
+
+filter: brightness(1.15);
+
+transform: translateY(-2px);
+
+}
+
+.upgrade-btn:active:not(:disabled)  {
+
+border-bottom: 3px solid var(--ui-border);
+
+transform:translateY(3px);
+
+margin-bottom: 15px;
+
+}
+
+.upgrade-btn:disabled  {
+
+background: #7f8fa6;
+
+cursor: not-allowed;
+
+color:#dcdde1;
+
+text-shadow: none;
+
+}
+
+#action-menu  {
+
+position: absolute;
+
+display: none;
+
+background: var(--ui-bg);
+
+border: 4px solid var(--ui-border);
+
+border-bottom: 8px solid var(--ui-border);
+
+border-radius: 12px;
+
+padding: 10px;
+
+z-index: 300;
+
+box-shadow: 0 15px 25px rgba(0,0,0,0.5);
+
+width: 150px;
+
+transform-origin: top left;
+
+animation: popIn 0.2s cubic-bezier(0.4,0,0.2,1);
+
+}
+
+@keyframes popIn  {
+
+from  {
+
+transform: scale(0.5);
+
+opacity:0;
+
+}
+
+to  {
+
+transform: scale(1);
+
+opacity:1;
+
+}
+
+}
+
+#notif-container  {
+
+position: absolute;
+
+top: 60px;
+
+left: 50%;
+
+transform: translateX(-50%);
+
+z-index: 400;
+
+pointer-events: none;
+
+display: flex;
+
+flex-direction: column;
+
+align-items: center;
+
+gap: 8px;
+
+}
+
+.notif  {
+
+background: rgba(47, 53, 66, 0.95);
+
+color: #fff;
+
+padding: 10px 20px;
+
+border-radius: 25px;
+
+font-weight: 900;
+
+animation: floatUp 2.5s ease-out forwards;
+
+border: 3px solid var(--accent-pink);
+
+box-shadow: 0 8px 15px rgba(0,0,0,0.5);
+
+text-shadow: 1px 1px 0 #000;
+
+letter-spacing: 0.5px;
+
+font-size: 14px;
+
+}
+
+.notif.moral  {
+
+border-color: #e84118;
+
+background: rgba(60, 0, 0, 0.95);
+
+font-size: 16px;
+
+padding: 15px 30px;
+
+}
+
+@keyframes floatUp  {
+
+0%  {
+
+opacity: 0;
+
+transform: translateY(20px) scale(0.8);
+
+}
+
+10%  {
+
+opacity: 1;
+
+transform: translateY(0) scale(1);
+
+}
+
+80%  {
+
+opacity: 1;
+
+transform: translateY(-40px);
+
+}
+
+100%  {
+
+opacity: 0;
+
+transform: translateY(-50px);
+
+}
+
+}
+
+#sleep-overlay  {
+
+position: absolute;
+
+top: 0;
+
+left: 0;
+
+width: 100%;
+
+height: 100%;
+
+background: #000;
+
+opacity: 0;
+
+pointer-events: none;
+
+transition: opacity 1s cubic-bezier(0.4, 0, 0.2, 1);
+
+z-index: 500;
+
+}
+
+.modal-box  {
+
+position: absolute;
+
+top: 50%;
+
+left: 50%;
+
+transform: translate(-50%, -50%);
+
+width: 450px;
+
+background: var(--ui-bg);
+
+border: 5px solid var(--ui-border);
+
+border-bottom: 10px solid var(--ui-border);
+
+border-radius: 12px;
+
+z-index: 600;
+
+display: none;
+
+padding: 25px;
+
+box-sizing: border-box;
+
+box-shadow: 0 30px 60px rgba(0,0,0,0.8);
+
+animation: modalPop 0.3s cubic-bezier(0.4,0,0.2,1);
+
+}
+
+@keyframes modalPop  {
+
+from  {
+
+transform: translate(-50%, -40%);
+
+opacity: 0;
+
+}
+
+to  {
+
+transform: translate(-50%, -50%);
+
+opacity: 1;
+
+}
+
+}
+
+#rbx-results  {
+
+margin-top: 20px;
+
+max-height: 350px;
+
+overflow-y: auto;
+
+padding-right: 10px;
+
+}
+
+#rbx-results::-webkit-scrollbar  {
+
+width: 8px;
+
+}
+
+#rbx-results::-webkit-scrollbar-thumb  {
+
+background: var(--ui-border);
+
+border-radius: 4px;
+
+}
+
+#rbx-results div  {
+
+margin-bottom: 15px;
+
+background: #fff;
+
+padding: 10px;
+
+border: 3px solid var(--ui-border);
+
+border-radius: 8px;
+
+box-shadow: inset 0 3px 5px rgba(0,0,0,0.05);
+
+}
+
+#return-btn  {
+
+position: absolute;
+
+bottom: 30px;
+
+left: 30px;
+
+padding: 12px 25px;
+
+background: linear-gradient(180deg, #0097e6, #00a8ff);
+
+color: #fff;
+
+border: 4px solid var(--ui-border);
+
+border-bottom: 8px solid var(--ui-border);
+
+border-radius: 10px;
+
+font-weight: 900;
+
+font-size: 15px;
+
+cursor: pointer;
+
+z-index: 200;
+
+display: none;
+
+box-shadow: 0 8px 15px rgba(0,0,0,0.4);
+
+text-shadow: 1px 1px 0 #000;
+
+transition: transform 0.1s;
+
+}
+
+#return-btn:active  {
+
+border-bottom: 4px solid var(--ui-border);
+
+transform:translateY(4px);
+
+margin-bottom: 4px;
+
+}
+
+/* Particles & Soap */ .steam-particle  {
+
+position: absolute;
+
+width: 40px;
+
+height: 40px;
+
+background: radial-gradient(circle, rgba(255,255,255,0.6) 0%, transparent 70%);
+
+border-radius: 50%;
+
+filter: blur(3px);
+
+pointer-events: none;
+
+animation: steamRise 2.5s cubic-bezier(0.2, 0.8, 0.3, 1) forwards;
+
+z-index: 60;
+
+}
+
+@keyframes steamRise  {
+
+0%  {
+
+transform: translateY(0) scale(0.5);
+
+opacity: 0;
+
+}
+
+20%  {
+
+opacity: 1;
+
+}
+
+100%  {
+
+transform: translateY(-120px) scale(2.5);
+
+opacity: 0;
+
+}
+
+}
+
+.soap-projectile  {
+
+position: absolute;
+
+width: 28px;
+
+height: 18px;
+
+background: #ffebcc;
+
+border: 3px solid #111;
+
+border-radius: 10px;
+
+z-index: 1000;
+
+animation: throwSoap 0.8s cubic-bezier(0.2, 0.8, 0.3, 1) forwards;
+
+box-shadow: inset -3px -3px 0 rgba(0,0,0,0.2), 0 5px 10px rgba(0,0,0,0.3);
+
+}
+
+.soap-projectile::after  {
+
+content:'';
+
+position:absolute;
+
+width:10px;
+
+height:4px;
+
+background:rgba(255,255,255,0.6);
+
+top:2px;
+
+left:4px;
+
+border-radius:2px;
+
+}
+
+@keyframes throwSoap  {
+
+0%  {
+
+transform: scale(1) translate(0, 0) rotate(0deg);
+
+opacity: 1;
+
+}
+
+80%  {
+
+transform: scale(30) translate(-15px, 15px) rotate(720deg);
+
+opacity: 1;
+
+}
+
+100%  {
+
+transform: scale(40) translate(-20px, 20px) rotate(800deg);
+
+opacity: 0;
+
+}
+
+}
+
+.dust-particle  {
+
+position: absolute;
+
+width: 4px;
+
+height: 4px;
+
+background: #fff;
+
+border-radius: 50%;
+
+pointer-events: none;
+
+animation: floatDust 4s infinite linear;
+
+opacity: 0.3;
+
+}
+
+@keyframes floatDust  {
+
+0%  {
+
+transform: translateY(0) translateX(0);
+
+opacity:0;
+
+}
+
+50%  {
+
+opacity:0.5;
+
+}
+
+100%  {
+
+transform: translateY(-50px) translateX(20px);
+
+opacity:0;
+
+}
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<!-- Loading Screen -->
+
+<div id="loading-screen">
+
+<div class="loader-neko">
+
+</div>
+
+<div id="loading-content">
+
+<h2 id="txt-loading" style="text-shadow: 2px 2px 0 #000; letter-spacing: 2px;">
+
+Loading Details...
+
+</h2>
+
+<div class="progress-bar">
+
+<div class="progress-fill" id="loading-fill">
+
+</div>
+
+</div>
+
+</div>
+
+<div id="tap-to-start" onclick="startGame()">
+
+Tap to Start Simulation
+
+</div>
+
+</div>
+
+<div id="game-wrapper">
+
+<div id="lighting-layer">
+
+</div>
+
+<!-- ROOM MAIN -->
+
+<div id="room-main" class="room active">
+
+<div class="wall">
+
+<div class="poster">
+
+</div>
+
+</div>
+
+<div class="floor">
+
+<div class="rug">
+
+</div>
+
+</div>
+
+<div id="door-bathroom" class="door solid-obj interactable">
+
+<div class="door-knob">
+
+</div>
+
+</div>
+
+<div id="door-depot" class="door solid-obj interactable">
+
+<div class="door-knob">
+
+</div>
+
+</div>
+
+<div id="obj-bed" class="solid-obj interactable">
+
+<div class="bed-frame">
+
+</div>
+
+<div class="bed-headboard">
+
+</div>
+
+<div class="bed-footboard">
+
+</div>
+
+<div class="bed-mattress">
+
+</div>
+
+<div class="bed-pillow">
+
+</div>
+
+<div class="bed-pillow">
+
+</div>
+
+<div class="bed-blanket">
+
+</div>
+
+</div>
+
+<!-- Desk is z-index:60 so Neko can walk behind it, chair is z-index:3 -->
+
+<div id="obj-desk" class="solid-obj interactable">
+
+<div class="desk-leg-l">
+
+</div>
+
+<div class="desk-leg-r">
+
+</div>
+
+<div class="desk-pc-case">
+
+<div class="pc-fan f1">
+
+</div>
+
+<div class="pc-fan f2">
+
+</div>
+
+<div class="pc-fan f3">
+
+</div>
+
+<div class="desk-pc-glass">
+
+</div>
+
+</div>
+
+<div class="desk-chair">
+
+<div class="chair-wheels">
+
+</div>
+
+<div class="chair-pole">
+
+</div>
+
+<div class="chair-back">
+
+</div>
+
+<div class="chair-seat">
+
+</div>
+
+</div>
+
+<div class="desk-top">
+
+</div>
+
+<div class="desk-monitor-base">
+
+</div>
+
+<div class="desk-monitor">
+
+<div class="desk-screen">
+
+</div>
+
+</div>
+
+<div class="desk-keyboard">
+
+</div>
+
+<div class="desk-mouse">
+
+</div>
+
+</div>
+
+<div id="obj-table" class="solid-obj interactable">
+
+<div class="table-leg l">
+
+</div>
+
+<div class="table-leg r">
+
+</div>
+
+<div class="table-top">
+
+</div>
+
+<div class="table-cup">
+
+<div class="table-steam">
+
+</div>
+
+</div>
+
+</div>
+
+<div id="obj-tv" class="solid-obj interactable">
+
+<div class="tv-unit">
+
+<div class="tv-unit-shelf">
+
+<div class="tv-console">
+
+</div>
+
+</div>
+
+</div>
+
+<div class="tv-pole">
+
+</div>
+
+<div class="tv-monitor">
+
+<div class="tv-screen">
+
+</div>
+
+</div>
+
+</div>
+
+<div class="plant">
+
+<div class="plant-leaf">
+
+</div>
+
+<div class="plant-leaf">
+
+</div>
+
+<div class="plant-leaf">
+
+</div>
+
+</div>
+
+</div>
+
+<!-- ROOM BATHROOM -->
+
+<div id="room-bathroom" class="room">
+
+<div class="wall" style="background: var(--wall-bath);">
+
+</div>
+
+<div class="floor">
+
+</div>
+
+<div id="obj-mirror">
+
+</div>
+
+<div id="obj-toilet" class="solid-obj interactable">
+
+<div class="toilet-base">
+
+</div>
+
+<div class="toilet-bowl">
+
+</div>
+
+<div class="toilet-tank">
+
+<div class="toilet-button">
+
+</div>
+
+</div>
+
+<div class="toilet-paper">
+
+</div>
+
+</div>
+
+<div id="obj-sink" class="solid-obj interactable">
+
+<div class="sink-cabinet">
+
+</div>
+
+<div class="sink-basin">
+
+</div>
+
+<div class="sink-bowl">
+
+</div>
+
+<div class="sink-faucet">
+
+</div>
+
+</div>
+
+<div id="obj-washing-machine" class="solid-obj interactable">
+
+<div class="wm-body">
+
+</div>
+
+<div class="wm-panel">
+
+<div class="wm-knob">
+
+</div>
+
+<div class="wm-drawer">
+
+</div>
+
+</div>
+
+<div class="wm-door">
+
+<div class="wm-clothes">
+
+</div>
+
+</div>
+
+</div>
+
+<div id="obj-shower" class="solid-obj interactable">
+
+<div class="shower-base">
+
+</div>
+
+<div class="shower-fixture">
+
+</div>
+
+<div class="shower-head">
+
+</div>
+
+<div class="shower-glass">
+
+</div>
+
+<div class="shower-door">
+
+</div>
+
+<div class="shower-handle">
+
+</div>
+
+</div>
+
+</div>
+
+<!-- ROOM DEPOT -->
+
+<div id="room-depot" class="room">
+
+<div class="wall" style="background: var(--wall-depot);">
+
+</div>
+
+<div class="floor">
+
+</div>
+
+<div id="obj-server-rack" class="solid-obj interactable">
+
+<div class="rack-frame">
+
+</div>
+
+<div class="rack-server s1">
+
+<div class="rack-led">
+
+</div>
+
+<div class="rack-led2">
+
+</div>
+
+</div>
+
+<div class="rack-server s2">
+
+<div class="rack-led">
+
+</div>
+
+<div class="rack-led2">
+
+</div>
+
+</div>
+
+<div class="rack-server s3">
+
+<div class="rack-led">
+
+</div>
+
+<div class="rack-led2">
+
+</div>
+
+</div>
+
+<div class="rack-server s4">
+
+<div class="rack-led">
+
+</div>
+
+<div class="rack-led2">
+
+</div>
+
+</div>
+
+</div>
+
+<div id="obj-oven" class="solid-obj interactable">
+
+<div class="oven-body">
+
+</div>
+
+<div class="oven-top">
+
+<div class="oven-burner b1">
+
+</div>
+
+<div class="oven-burner b2">
+
+</div>
+
+</div>
+
+<div class="oven-door">
+
+<div class="oven-handle">
+
+</div>
+
+</div>
+
+<div class="oven-knob k1">
+
+</div>
+
+<div class="oven-knob k2">
+
+</div>
+
+<div class="oven-knob k3">
+
+</div>
+
+</div>
+
+<div id="obj-miner" class="solid-obj interactable">
+
+<div class="miner-body">
+
+</div>
+
+<div class="miner-grill">
+
+<div class="miner-fan">
+
+</div>
+
+<div class="miner-fan">
+
+</div>
+
+<div class="miner-fan">
+
+</div>
+
+</div>
+
+<div class="miner-pipe">
+
+</div>
+
+<div class="miner-pipe">
+
+</div>
+
+<div class="miner-pipe">
+
+</div>
+
+<div class="miner-screen">
+
+</div>
+
+</div>
+
+</div>
+
+<!-- NEKO CHAR - ULTRA CSS ART -->
+
+<div class="neko-char state-idle" id="neko">
+
+<div class="char-scaler">
+
+<div class="neko-hair-back">
+
+</div>
+
+<div class="neko-tail">
+
+</div>
+
+<div class="neko-head">
+
+<div class="neko-ear left">
+
+<div class="neko-ear-inner">
+
+</div>
+
+<div class="neko-ear-fluff">
+
+</div>
+
+</div>
+
+<div class="neko-ear right">
+
+<div class="neko-ear-inner">
+
+</div>
+
+<div class="neko-ear-fluff">
+
+</div>
+
+</div>
+
+<div class="neko-face">
+
+<div class="neko-eye left">
+
+<div class="neko-pupil">
+
+</div>
+
+</div>
+
+<div class="neko-eye right">
+
+<div class="neko-pupil">
+
+</div>
+
+</div>
+
+<div class="neko-eyelash left">
+
+</div>
+
+<div class="neko-eyelash right">
+
+</div>
+
+<div class="neko-blush left">
+
+</div>
+
+<div class="neko-blush right">
+
+</div>
+
+<div class="neko-mouth">
+
+</div>
+
+</div>
+
+<div class="neko-hair-front">
+
+<div class="bang c">
+
+</div>
+
+<div class="bang l">
+
+</div>
+
+<div class="bang r">
+
+</div>
+
+<div class="ahoge">
+
+</div>
+
+</div>
+
+</div>
+
+<div class="neko-arm left">
+
+</div>
+
+<div class="neko-arm right">
+
+</div>
+
+<div class="neko-body-container">
+
+<div class="neko-collar">
+
+<div class="neko-bell">
+
+</div>
+
+</div>
+
+<div class="neko-chest">
+
+</div>
+
+<div class="neko-torso">
+
+</div>
+
+<div class="censor-bar">
+
+</div>
+
+<div class="neko-skirt">
+
+</div>
+
+<div class="neko-apron">
+
+</div>
+
+</div>
+
+<div class="neko-leg left">
+
+</div>
+
+<div class="neko-leg right">
+
+</div>
+
+</div>
+
+</div>
+
+<!-- UI COMPONENTS -->
+
+<div id="ui-top-left" class="ui-panel">
+
+<div style="font-weight: 900; font-size: 16px;">
+
+<span class="t-level">
+
+Seviye
+
+</span>
+
+<span id="ui-level" style="color: var(--accent-pink);">
+
+1
+
+</span>
+
+</div>
+
+<div class="stat-bar-container">
+
+<div id="ui-xp-fill" class="stat-bar-fill" style="width: 0%;">
+
+</div>
+
+<div id="ui-xp-text" class="stat-text">
+
+0 / 100
+
+</div>
+
+</div>
+
+<div class="stat-bar-container">
+
+<div id="ui-energy-fill" class="stat-bar-fill" style="width: 100%;">
+
+</div>
+
+<div id="ui-energy-text" class="stat-text">
+
+100
+
+</div>
+
+</div>
+
+<div class="stat-bar-container">
+
+<div id="ui-hunger-fill" class="stat-bar-fill" style="width: 100%;">
+
+</div>
+
+<div id="ui-hunger-text" class="stat-text">
+
+100
+
+</div>
+
+</div>
+
+<div style="font-weight: 900; margin-top: 10px; font-size: 15px; color: #feca57; text-shadow: 1px 1px 0 #000;">
+
+NKT:
+
+<span id="ui-nkt">
+
+0
+
+</span>
+
+</div>
+
+<div style="font-weight: 900; font-size: 14px; color: #48dbfb; text-shadow: 1px 1px 0 #000;">
+
+Tech:
+
+<span id="ui-tech">
+
+0
+
+</span>
+
+</div>
+
+</div>
+
+<div id="ui-top-center" class="ui-panel">
+
+<div style="font-weight: 900; font-size: 15px; color: #feca57; text-shadow: 1px 1px 0 #000;">
+
+<span class="t-pool">
+
+Havuz:
+
+</span>
+
+<span id="ui-nkt-pool">
+
+0
+
+</span>
+
+NKT
+
+</div>
+
+<button class="action-btn t-claim" onclick="claimNkt()">
+
+Topla
+
+</button>
+
+</div>
+
+<div id="ui-top-right">
+
+<button class="action-btn t-robux" onclick="toggleModal('robux-modal')">
+
+Robux
+
+</button>
+
+<button class="action-btn t-menu" onclick="toggleMenu()">
+
+☰ Menü
+
+</button>
+
+<button class="action-btn btn-icon" onclick="toggleModal('settings-modal')">
+
+⋮
+
+</button>
+
+</div>
+
+<div id="side-menu">
+
+<button class="close-btn" onclick="playSound('click'); toggleMenu()">
+
+X
+
+</button>
+
+<div class="tabs">
+
+<button class="t-upgrades" onclick="playSound('click'); showTab('upgrades')">
+
+Geliştirmeler
+
+</button>
+
+<button class="t-stats" onclick="playSound('click'); showTab('stats')">
+
+İstatistikler
+
+</button>
+
+<button class="t-about" onclick="playSound('click'); showTab('about')">
+
+Hakkında
+
+</button>
+
+</div>
+
+<div id="tab-upgrades" class="tab-content active">
+
+</div>
+
+<div id="tab-stats" class="tab-content">
+
+</div>
+
+<div id="tab-about" class="tab-content">
+
+<h3 style="color: var(--accent-pink-dark); margin-top:0;">
+
+NEKOTOKYO
+
+</h3>
+
+<p style="font-weight:bold;">
+
+NEKO LIFE & ROBUX
+
+</p>
+
+<p class="t-desc">
+
+Tek HTML dosyalı mini yaşam simülatörü.
+
+</p>
+
+<p>
+
+<em class="t-autosave" style="color: #27ae60;">
+
+(Otomatik Kayıt Devrede)
+
+</em>
+
+</p>
+
+</div>
+
+</div>
+
+<div id="action-menu">
+
+</div>
+
+<div id="notif-container">
+
+</div>
+
+<div id="sleep-overlay">
+
+</div>
+
+<div id="robux-modal" class="modal-box">
+
+<button class="close-btn" onclick="playSound('click'); toggleModal('robux-modal')">
+
+X
+
+</button>
+
+<h2 style="margin-top:0; color: var(--accent-pink-dark);" class="t-rbxTitle">
+
+Robux Simülasyonu
+
+</h2>
+
+<input type="text" id="rbx-username" placeholder="Roblox Username" style="width: 100%; padding: 12px; margin-bottom: 15px; box-sizing: border-box; font-family: inherit; border: 3px solid var(--ui-border); border-radius: 8px; font-weight: bold;">
+
+<button class="action-btn t-search" onclick="playSound('click'); lookupUser()">
+
+Ara
+
+</button>
+
+<div id="rbx-results">
+
+</div>
+
+</div>
+
+<div id="settings-modal" class="modal-box">
+
+<button class="close-btn" onclick="playSound('click'); toggleModal('settings-modal')">
+
+X
+
+</button>
+
+<h2 style="margin-top:0; color: var(--accent-pink-dark);">
+
+Ayarlar / Settings
+
+</h2>
+
+<button class="action-btn" onclick="playSound('click'); toggleLang()">
+
+Dil / Language:
+
+<span id="lang-ind">
+
+TR
+
+</span>
+
+</button>
+
+<button class="action-btn" onclick="playSound('click'); showInfo('faq')">
+
+SSS / FAQ
+
+</button>
+
+<button class="action-btn" onclick="playSound('click'); showInfo('tos')">
+
+Hizmet Şartları / TOS
+
+</button>
+
+<div id="settings-info" style="margin-top:20px; font-size:15px; background:#fff; padding:15px; border:3px solid var(--ui-border); border-radius:8px; display:none; line-height:1.5;">
+
+</div>
+
+</div>
+
+<button id="return-btn" class="t-return" onclick="playSound('click'); changeRoom('room-main')">
+
+Ana Odaya Dön
+
+</button>
+
+</div>
+
+<script>
+
+// --- Translations --- const I18N = {
+
+tr: {
+
+loading: "Detaylar Yükleniyor...", tapStart: "Simülasyonu Başlatmak İçin Dokun", level: "Seviye", pool: "Havuz:", claim: "Topla", robux: "Robux", menu: "☰ Menü", upgrades: "Geliştirmeler", stats: "İstatistikler", about: "Hakkında", return: "Ana Odaya Dön", desc: "Ultra detaylı CSS sanatı içeren tek HTML dosyalı mini yaşam simülatörü.", autosave: "(Otomatik Kayıt Devrede)", rbxTitle: "Robux Simülasyonu", search: "Ara", faqHtml: "<b>Nasıl Oynanır?</b><br>Eşyalara tıklayarak Neko'nun ihtiyaçlarını gider. Masada çalışıp yemek yiyebilir, yatakta uyuyabilirsin.<br>NKT madenciliği arka planda otomatik yapılır.", tosHtml: "<b>Hizmet Şartları</b><br>Bu eğlence amaçlı bir simülasyon oyunudur. Hiçbir gerçek parayla bağlantısı veya işlemi yoktur.", errUser: "Kullanıcı bulunamadı.", errApi: "Roblox API'ye ulaşılamadı.", buyPass: "Simülasyon olarak alındı!", noMoney: "Yeterli NKT yok!", free: "Bu pass ücretsiz.", lvlUp: "Seviye Atladın!", tired: "Henüz uykun yok!", notHungry: "Henüz aç değilsin!", energyFull: "Enerjin yüksek!", cooldown: "Soğuma süresinde!", moral: "Özel hayata saygı göstermelisin! Sapıklık yapma!", morning: "Günaydın! ☀️", acts: {
+
+sleep: "Uyu", work: "Çalış", browse: "Gezin", watchTv: "TV İzle", eat: "Yemek Ye", coffee: "Kahve İç", bath: "Banyoya Gir", depot: "Depoya Gir", toilet: "Tuvaleti Kullan", wash: "Ellerini Yıka", shower: "Duş Al", washClothes: "Çamaşır Yıka", servers: "Sunucuları İncele", boost: "Kazımı Hızlandır", cook: "Yemek Yap" } }, en: {
+
+loading: "Loading Details...", tapStart: "Tap to Start Simulation", level: "Level", pool: "Pool:", claim: "Claim", robux: "Robux", menu: "☰ Menu", upgrades: "Upgrades", stats: "Stats", about: "About", return: "Return to Main Room", desc: "Ultra detailed CSS art single HTML life simulator.", autosave: "(Auto-Save Active)", rbxTitle: "Robux Simulation", search: "Search", faqHtml: "<b>How to Play?</b><br>Click objects to fulfill Neko's needs. Work or eat at desk, sleep on bed.<br>NKT mining is automatic in background.", tosHtml: "<b>Terms of Service</b><br>This is a simulation game for fun. No real money transactions are involved.", errUser: "User not found.", errApi: "Roblox API unreachable.", buyPass: "Bought as simulation!", noMoney: "Not enough NKT!", free: "This pass is free.", lvlUp: "Level Up!", tired: "Not tired yet!", notHungry: "Not hungry yet!", energyFull: "Energy is high!", cooldown: "On cooldown!", moral: "Respect privacy! Stop peeping!", morning: "Good morning! ☀️", acts: {
+
+sleep: "Sleep", work: "Work", browse: "Browse", watchTv: "Watch TV", eat: "Eat", coffee: "Drink Coffee", bath: "Enter Bathroom", depot: "Enter Depot", toilet: "Use Toilet", wash: "Wash Hands", shower: "Take Shower", washClothes: "Wash Clothes", servers: "Inspect Servers", boost: "Boost Miner", cook: "Cook" } } };
+
+let lang = 'tr'; function T(key) {
+
+return I18N[lang][key]; } function applyLang() {
+
+document.getElementById('lang-ind').innerText = lang.toUpperCase();
+
+document.getElementById('txt-loading').innerText = T('loading');
+
+document.getElementById('tap-to-start').innerText = T('tapStart');
+
+document.querySelector('.t-level').innerText = T('level');
+
+document.querySelector('.t-pool').innerText = T('pool');
+
+document.querySelector('.t-claim').innerText = T('claim');
+
+document.querySelector('.t-robux').innerText = T('robux');
+
+document.querySelector('.t-menu').innerText = T('menu');
+
+document.querySelector('.t-upgrades').innerText = T('upgrades');
+
+document.querySelector('.t-stats').innerText = T('stats');
+
+document.querySelector('.t-about').innerText = T('about');
+
+document.querySelector('.t-desc').innerText = T('desc');
+
+document.querySelector('.t-autosave').innerText = T('autosave');
+
+document.querySelector('.t-return').innerText = T('return');
+
+document.querySelector('.t-rbxTitle').innerText = T('rbxTitle');
+
+document.querySelector('.t-search').innerText = T('search');
+
+let info = document.getElementById('settings-info');
+
+if(info.dataset.current === 'faq') info.innerHTML = T('faqHtml');
+
+if(info.dataset.current === 'tos') info.innerHTML = T('tosHtml');
+
+updateActionsData();
+
+} function toggleLang() {
+
+lang = lang === 'tr' ? 'en' : 'tr'; applyLang();
+
+} function showInfo(type) {
+
+let info = document.getElementById('settings-info');
+
+info.style.display = 'block'; info.dataset.current = type; info.innerHTML = type === 'faq' ? T('faqHtml') : T('tosHtml');
+
+} // --- Audio Engine --- const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+let audioInit = false; let walkInterval = null; function playSound(type) {
+
+if (!audioInit) return; if(audioCtx.state === 'suspended') audioCtx.resume();
+
+const osc = audioCtx.createOscillator();
+
+const gain = audioCtx.createGain();
+
+osc.connect(gain);
+
+gain.connect(audioCtx.destination);
+
+const now = audioCtx.currentTime; if (type === 'click') {
+
+osc.type = 'sine'; osc.frequency.setValueAtTime(600, now);
+
+osc.frequency.exponentialRampToValueAtTime(900, now + 0.1);
+
+gain.gain.setValueAtTime(0.1, now);
+
+gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+
+osc.start(now);
+
+osc.stop(now + 0.1);
+
+} else if (type === 'blip') {
+
+osc.type = 'triangle'; osc.frequency.setValueAtTime(1200, now);
+
+gain.gain.setValueAtTime(0.03, now);
+
+gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+
+osc.start(now);
+
+osc.stop(now + 0.05);
+
+} else if (type === 'walk') {
+
+osc.type = 'square'; osc.frequency.setValueAtTime(100, now);
+
+gain.gain.setValueAtTime(0.02, now);
+
+gain.gain.linearRampToValueAtTime(0.001, now + 0.05);
+
+osc.start(now);
+
+osc.stop(now + 0.05);
+
+} else if (type === 'success') {
+
+osc.type = 'sine'; osc.frequency.setValueAtTime(400, now);
+
+osc.frequency.setValueAtTime(600, now + 0.1);
+
+osc.frequency.setValueAtTime(800, now + 0.2);
+
+gain.gain.setValueAtTime(0.1, now);
+
+gain.gain.linearRampToValueAtTime(0.01, now + 0.3);
+
+osc.start(now);
+
+osc.stop(now + 0.3);
+
+} else if (type === 'levelup') {
+
+osc.type = 'square'; osc.frequency.setValueAtTime(440, now);
+
+osc.frequency.setValueAtTime(554, now + 0.15);
+
+osc.frequency.setValueAtTime(659, now + 0.3);
+
+osc.frequency.setValueAtTime(880, now + 0.45);
+
+gain.gain.setValueAtTime(0.1, now);
+
+gain.gain.linearRampToValueAtTime(0.01, now + 0.8);
+
+osc.start(now);
+
+osc.stop(now + 0.8);
+
+} else if (type === 'error') {
+
+osc.type = 'sawtooth'; osc.frequency.setValueAtTime(200, now);
+
+osc.frequency.linearRampToValueAtTime(100, now + 0.2);
+
+gain.gain.setValueAtTime(0.1, now);
+
+gain.gain.linearRampToValueAtTime(0.01, now + 0.2);
+
+osc.start(now);
+
+osc.stop(now + 0.2);
+
+} else if (type === 'slap') {
+
+osc.type = 'sawtooth'; osc.frequency.setValueAtTime(800, now);
+
+osc.frequency.exponentialRampToValueAtTime(50, now + 0.3);
+
+gain.gain.setValueAtTime(0.25, now);
+
+gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+
+osc.start(now);
+
+osc.stop(now + 0.3);
+
+} } document.addEventListener('click', () => {
+
+document.getElementById('action-menu').style.display = 'none'; });
+
+// --- Game State & Save System --- let state = {
+
+energy: 100, hunger: 100, nkt: 0, level: 1, xp: 0, gameTime: 480, nktPool: 0, techParts: 0, minerCooldown: 0, isWalking: false, isSleeping: false, isShowering: false, upgrades: {
+
+'obj-desk': 1, 'obj-tv': 1, 'obj-bed': 1, 'obj-table': 1 } };
+
+const xpThresholds = [0, 100, 250, 500, 900, 1400, 2000]; let zeroEnergyTicks = 0; let steamInterval = null; function saveGame() {
+
+localStorage.setItem('nekoGameState', JSON.stringify(state));
+
+} function loadGame() {
+
+let saved = localStorage.getItem('nekoGameState');
+
+if (saved) {
+
+try {
+
+let parsed = JSON.parse(saved);
+
+state = {
+
+...state, ...parsed };
+
+state.isWalking = false; state.isSleeping = false; state.isShowering = false; if(state.level >= 2) document.getElementById('obj-oven').style.display = 'block'; if(state.level >= 3) document.getElementById('obj-washing-machine').style.display = 'block'; for(let id in state.upgrades) {
+
+if(state.upgrades[id] === 3) document.getElementById(id).classList.add('glow-effect');
+
+} } catch(e) {
+
+console.error("Kayıt okunamadı.");
+
+} } } // --- Actions Data --- let actionsData = {
+
+};
+
+function updateActionsData() {
+
+actionsData = {
+
+'obj-bed': {
+
+name: 'Yatak', targetX: 160, actions: [{
+
+name: T('acts').sleep, req: () => state.energy < 90, failMsg: T('tired'), cb: doSleep, duration: 1000, state: 'state-sleep' }] }, 'obj-desk': {
+
+name: 'Çalışma Masası', targetX: 370, actions: [ {
+
+name: T('acts').work, cb: () => {
+
+addXP(15, 'obj-desk');
+
+addNKT(5, 'obj-desk');
+
+}, duration: 2000, state: 'state-desk-sit' }, {
+
+name: T('acts').browse, cb: () => {
+
+addXP(5, 'obj-desk');
+
+}, duration: 1500, state: 'state-desk-sit' } ] }, 'obj-tv': {
+
+name: 'Televizyon', targetX: 730, actions: [{
+
+name: T('acts').watchTv, cb: () => {
+
+addXP(8, 'obj-tv');
+
+}, duration: 2000, state: 'state-sit' }] }, 'obj-table': {
+
+name: 'Sehpa', targetX: 540, actions: [ {
+
+name: T('acts').eat, req: () => state.hunger < 80, failMsg: T('notHungry'), cb: () => {
+
+state.hunger = Math.min(100, state.hunger + 30);
+
+addXP(5, 'obj-table');
+
+}, duration: 2000, state: 'state-sit' }, {
+
+name: T('acts').coffee, req: () => state.energy < 90, failMsg: T('energyFull'), cb: () => {
+
+state.energy = Math.min(100, state.energy + 15);
+
+addXP(2, 'obj-table');
+
+}, duration: 1500, state: 'state-sit' } ] }, 'door-bathroom': {
+
+name: 'Banyo Kapısı', targetX: 60, actions: [{
+
+name: T('acts').bath, cb: () => changeRoom('room-bathroom'), duration: 500, state: 'state-idle' }] }, 'door-depot': {
+
+name: 'Depo Kapısı', targetX: 850, actions: [{
+
+name: T('acts').depot, cb: () => changeRoom('room-depot'), duration: 500, state: 'state-idle' }] }, 'obj-toilet': {
+
+name: 'Tuvalet', targetX: 120, actions: [{
+
+name: T('acts').toilet, cb: () => {
+
+addXP(3);
+
+}, duration: 1500, state: 'state-sit-back' }] }, 'obj-sink': {
+
+name: 'Lavabo', targetX: 340, actions: [{
+
+name: T('acts').wash, cb: () => {
+
+addXP(3);
+
+}, duration: 1000, state: 'state-idle' }] }, 'obj-shower': {
+
+name: 'Duş', targetX: 730, actions: [{
+
+name: T('acts').shower, cb: doShower, duration: 6000, state: 'state-shower' }] }, 'obj-washing-machine': {
+
+name: 'Çamaşır Makinesi', targetX: 550, actions: [{
+
+name: T('acts').washClothes, cb: () => {
+
+addXP(12);
+
+addNKT(2);
+
+}, duration: 2500, state: 'state-idle' }] }, 'obj-server-rack': {
+
+name: 'Sunucular', targetX: 180, actions: [{
+
+name: T('acts').servers, cb: () => {
+
+addXP(5);
+
+state.techParts += 1; showNotif("+1 Tech Parçası");
+
+}, duration: 2000, state: 'state-idle' }] }, 'obj-miner': {
+
+name: 'Kazım Cihazı', targetX: 750, actions: [{
+
+name: T('acts').boost, req: () => Date.now() - state.minerCooldown >= 300000, failMsg: T('cooldown'), cb: () => {
+
+addXP(20);
+
+addNKT(50);
+
+state.minerCooldown = Date.now();
+
+showNotif("Hızlandırıldı!");
+
+}, duration: 1500, state: 'state-idle' }] }, 'obj-oven': {
+
+name: 'Fırın', targetX: 420, actions: [{
+
+name: T('acts').cook, cb: () => {
+
+state.hunger = Math.min(100, state.hunger + 40);
+
+addXP(15);
+
+}, duration: 3000, state: 'state-idle' }] } };
+
+} function addXP(base, objId) {
+
+let mult = 1; if (objId && state.upgrades[objId] >= 2) mult += 0.5; if (state.hunger === 0) mult *= 0.5; state.xp += Math.floor(base * mult);
+
+checkLevelUp();
+
+} function addNKT(base, objId) {
+
+let mult = 1; if (objId && state.upgrades[objId] >= 3) mult += 0.5; state.nkt += Math.floor(base * mult);
+
+} function checkLevelUp() {
+
+let maxLevel = xpThresholds.length - 1; if (state.level >= maxLevel) return; let required = xpThresholds[state.level]; if (state.xp >= required) {
+
+state.xp -= required; state.level++; playSound('levelup');
+
+showNotif(T('lvlUp'));
+
+state.nkt += 50; state.techParts += 5; if (state.level >= 2) document.getElementById('obj-oven').style.display = 'block'; if (state.level >= 3) document.getElementById('obj-washing-machine').style.display = 'block'; checkLevelUp();
+
+} } function createSteamParticle() {
+
+let shower = document.getElementById('obj-shower');
+
+let p = document.createElement('div');
+
+p.className = 'steam-particle'; p.style.left = (Math.random() * 60 + 10) + 'px'; p.style.bottom = (Math.random() * 40 + 50) + 'px'; shower.appendChild(p);
+
+setTimeout(() => p.remove(), 2500);
+
+} function doShower() {
+
+return new Promise(resolve => {
+
+state.isShowering = true; steamInterval = setInterval(createSteamParticle, 200);
+
+setTimeout(() => {
+
+clearInterval(steamInterval);
+
+state.isShowering = false; state.energy = Math.min(100, state.energy + 20);
+
+addXP(10);
+
+resolve();
+
+}, 6000);
+
+});
+
+} function triggerPeekEvent() {
+
+playSound('slap');
+
+showNotif(T('moral'), true);
+
+let wrapper = document.getElementById('game-wrapper');
+
+let soap = document.createElement('div');
+
+soap.className = 'soap-projectile'; let neko = document.getElementById('neko');
+
+let startLeft = parseInt(neko.style.left) + 40; let startBottom = parseInt(neko.style.bottom || 130) + 80; soap.style.left = startLeft + 'px'; soap.style.bottom = startBottom + 'px'; wrapper.appendChild(soap);
+
+setTimeout(() => soap.remove(), 800);
+
+} async function moveToAndDo(targetX, duration, stateClass, cb) {
+
+if (state.isWalking) return; document.getElementById('action-menu').style.display = 'none'; let neko = document.getElementById('neko');
+
+let currentX = parseInt(neko.style.left || 475);
+
+state.isWalking = true; neko.className = 'neko-char state-walk ' + (state.hunger === 0 ? 'dizzy' : '');
+
+let scaler = neko.querySelector('.char-scaler');
+
+scaler.style.transform = targetX < currentX ? 'rotateY(180deg)' : 'rotateY(0deg)'; let dist = Math.abs(targetX - currentX);
+
+let walkDuration = Math.max(300, dist * 3);
+
+neko.style.transition = `left ${
+
+walkDuration}ms linear`; neko.style.left = targetX + 'px'; walkInterval = setInterval(() => playSound('walk'), 250);
+
+setTimeout(async () => {
+
+clearInterval(walkInterval);
+
+neko.className = 'neko-char ' + stateClass + ' ' + (state.hunger === 0 ? 'dizzy' : '');
+
+if (stateClass === 'state-sit-back') scaler.style.transform = 'rotateY(180deg)'; else if (stateClass === 'state-sit' || stateClass === 'state-desk-sit') scaler.style.transform = 'rotateY(0deg)'; await new Promise(r => setTimeout(r, 100));
+
+await cb();
+
+if(!state.isShowering && !state.isSleeping) playSound('success');
+
+neko.className = 'neko-char state-idle ' + (state.hunger === 0 ? 'dizzy' : '');
+
+scaler.style.transform = 'rotateY(0deg)'; setTimeout(() => {
+
+let currentPos = parseInt(neko.style.left);
+
+if (currentPos !== 475) {
+
+neko.className = 'neko-char state-walk ' + (state.hunger === 0 ? 'dizzy' : '');
+
+scaler.style.transform = 475 < currentPos ? 'rotateY(180deg)' : 'rotateY(0deg)'; let homeWalkDur = Math.max(300, Math.abs(475 - currentPos) * 3);
+
+neko.style.transition = `left ${
+
+homeWalkDur}ms linear`; neko.style.left = '475px'; walkInterval = setInterval(() => playSound('walk'), 250);
+
+setTimeout(() => {
+
+clearInterval(walkInterval);
+
+neko.className = 'neko-char state-idle ' + (state.hunger === 0 ? 'dizzy' : '');
+
+scaler.style.transform = 'rotateY(0deg)'; state.isWalking = false; updateUI();
+
+saveGame();
+
+}, homeWalkDur);
+
+} else {
+
+state.isWalking = false; updateUI();
+
+saveGame();
+
+} }, 300);
+
+}, walkDuration);
+
+} function doSleep() {
+
+return new Promise(resolve => {
+
+state.isSleeping = true; let overlay = document.getElementById('sleep-overlay');
+
+overlay.style.opacity = 1; setTimeout(() => {
+
+let sleepInterval = setInterval(() => {
+
+state.energy = Math.min(100, state.energy + 2);
+
+state.gameTime = (state.gameTime + 10) % 1440; if (state.gameTime >= 420 && state.gameTime < 430) {
+
+clearInterval(sleepInterval);
+
+state.gameTime = 420; overlay.style.opacity = 0; state.isSleeping = false; playSound('success');
+
+showNotif(T('morning'));
+
+setTimeout(resolve, 800);
+
+} updateUI();
+
+}, 100);
+
+}, 1000);
+
+});
+
+} function changeRoom(roomId) {
+
+document.querySelectorAll('.room').forEach(r => r.classList.remove('active'));
+
+document.getElementById(roomId).classList.add('active');
+
+document.getElementById('return-btn').style.display = roomId === 'room-main' ? 'none' : 'block'; } function claimNkt() {
+
+playSound('click');
+
+if (state.nktPool > 0) {
+
+state.nkt += Math.floor(state.nktPool);
+
+playSound('success');
+
+showNotif(`+${
+
+Math.floor(state.nktPool)} NKT!`);
+
+state.nktPool = 0; updateUI();
+
+saveGame();
+
+} } function showNotif(text, isMoral = false) {
+
+const container = document.getElementById('notif-container');
+
+const notif = document.createElement('div');
+
+notif.className = 'notif' + (isMoral ? ' moral' : '');
+
+notif.innerText = text; container.appendChild(notif);
+
+setTimeout(() => notif.remove(), isMoral ? 4000 : 2500);
+
+} function formatTime(mins) {
+
+let h = Math.floor(mins / 60);
+
+let m = mins % 60; return `${
+
+h.toString().padStart(2, '0')}:${
+
+m.toString().padStart(2, '0')}`; } function updateLighting() {
+
+let layer = document.getElementById('lighting-layer');
+
+if (state.gameTime >= 360 && state.gameTime < 1080) {
+
+layer.style.backgroundColor = 'transparent'; layer.style.backdropFilter = 'none'; } else if (state.gameTime >= 1080 && state.gameTime < 1200) {
+
+layer.style.backgroundColor = 'rgba(255, 120, 30, 0.2)'; layer.style.backdropFilter = 'contrast(1.1) saturate(1.2)'; } else {
+
+layer.style.backgroundColor = 'rgba(10, 15, 40, 0.7)'; layer.style.backdropFilter = 'contrast(1.2)'; } } function updateUI() {
+
+let maxLevel = xpThresholds.length - 1; document.getElementById('ui-level').innerText = state.level >= maxLevel ? "MAKS" : state.level; let required = state.level >= maxLevel ? 1 : xpThresholds[state.level]; let xpPct = state.level >= maxLevel ? 100 : (state.xp / required) * 100; document.getElementById('ui-xp-fill').style.width = xpPct + '%'; document.getElementById('ui-xp-text').innerText = state.level >= maxLevel ? "MAKS" : `${
+
+state.xp} / ${
+
+required}`; document.getElementById('ui-energy-fill').style.width = state.energy + '%'; document.getElementById('ui-hunger-fill').style.width = state.hunger + '%'; document.getElementById('ui-energy-text').innerText = Math.floor(state.energy);
+
+document.getElementById('ui-hunger-text').innerText = Math.floor(state.hunger);
+
+document.getElementById('ui-nkt').innerText = state.nkt; document.getElementById('ui-tech').innerText = state.techParts; document.getElementById('ui-nkt-pool').innerText = Math.floor(state.nktPool);
+
+document.getElementById('tab-stats').innerHTML = ` <strong>Zaman:</strong> ${
+
+formatTime(state.gameTime)}<br> <strong>Enerji:</strong> ${
+
+Math.floor(state.energy)}<br> <strong>Açlık:</strong> ${
+
+Math.floor(state.hunger)}<br> <strong>Seviye:</strong> ${
+
+state.level}<br> <strong>NKT:</strong> ${
+
+state.nkt}<br> <strong>Tech Parts:</strong> ${
+
+state.techParts} `; updateLighting();
+
+} const upgradeCosts = {
+
+2: 10, 3: 25 };
+
+const upgradeableItems = ['obj-desk', 'obj-tv', 'obj-bed', 'obj-table']; function renderUpgrades() {
+
+const container = document.getElementById('tab-upgrades');
+
+container.innerHTML = ''; upgradeableItems.forEach(id => {
+
+let tier = state.upgrades[id]; let next = tier + 1; let itemData = actionsData[id]; if (tier < 3) {
+
+let cost = upgradeCosts[next]; let btn = document.createElement('button');
+
+btn.className = 'upgrade-btn'; btn.innerText = `${
+
+itemData.name} Sv.${
+
+next}\n(Maliyet: ${
+
+cost} Tech)`; btn.disabled = state.techParts < cost; btn.onclick = () => {
+
+playSound('click');
+
+if (state.techParts >= cost) {
+
+state.techParts -= cost; state.upgrades[id] = next; playSound('success');
+
+showNotif(`${
+
+itemData.name} geliştirildi!`);
+
+if (next === 3) document.getElementById(id).classList.add('glow-effect');
+
+renderUpgrades();
+
+updateUI();
+
+saveGame();
+
+} };
+
+container.appendChild(btn);
+
+} else {
+
+let div = document.createElement('div');
+
+div.style.marginBottom = '10px'; div.style.fontWeight = 'bold'; div.innerText = `${
+
+itemData.name} (MAKS)`; container.appendChild(div);
+
+} });
+
+} function toggleMenu() {
+
+let menu = document.getElementById('side-menu');
+
+menu.classList.toggle('open');
+
+if (menu.classList.contains('open')) {
+
+renderUpgrades();
+
+showTab('upgrades');
+
+} } function showTab(t) {
+
+document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+
+document.getElementById('tab-' + t).classList.add('active');
+
+updateUI();
+
+} function toggleModal(id) {
+
+playSound('click');
+
+let modal = document.getElementById(id);
+
+modal.style.display = modal.style.display === 'block' ? 'none' : 'block'; } async function lookupUser() {
+
+const username = document.getElementById('rbx-username').value; const results = document.getElementById('rbx-results');
+
+if(!username) return; results.innerHTML = '...'; try {
+
+let res = await fetch('https://users.roproxy.com/v1/usernames/users', {
+
+method: 'POST', headers: {
+
+'Content-Type': 'application/json' }, body: JSON.stringify({
+
+usernames: [username], excludeBannedUsers: true }) });
+
+let data = await res.json();
+
+if (!data.data || data.data.length === 0) {
+
+playSound('error');
+
+showNotif(T('errUser'));
+
+results.innerHTML = ''; return; } let userId = data.data[0].id; let thumbRes = await fetch(`https://thumbnails.roproxy.com/v1/users/avatar-headshot?userIds=${
+
+userId}&size=150x150&format=Png&isCircular=false`);
+
+let thumbData = await thumbRes.json();
+
+let imageUrl = thumbData.data && thumbData.data.length ? thumbData.data[0].imageUrl : ''; let gamesRes = await fetch(`https://games.roproxy.com/v2/users/${
+
+userId}/games?limit=10`);
+
+let gamesData = await gamesRes.json();
+
+playSound('success');
+
+results.innerHTML = imageUrl ? `<img src="${
+
+imageUrl}" width="100" height="100" style="border: 4px solid var(--ui-border);
+
+border-radius: 12px; margin-bottom: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+
+">` : ''; if(!gamesData.data || gamesData.data.length === 0) {
+
+results.innerHTML += '<div>Yok.</div>'; return; } for (let game of gamesData.data) {
+
+let passesRes = await fetch(`https://games.roproxy.com/v1/games/${
+
+game.id}/game-passes?limit=10`).catch(()=>null);
+
+let passesData = passesRes ? await passesRes.json() : {
+
+data:[]};
+
+if (!passesData.data) passesData.data = []; let gameDiv = document.createElement('div');
+
+gameDiv.innerHTML = `<h3 style="margin: 5px 0; color: var(--ui-border);
+
+">${
+
+game.name}</h3>`; for (let pass of passesData.data) {
+
+let passBtn = document.createElement('button');
+
+passBtn.className = 'action-btn'; let cost = pass.price * 10000; passBtn.innerText = `${
+
+pass.name} (${
+
+pass.price || 0} R$ = ${
+
+cost || 0} NKT)`; passBtn.onclick = () => {
+
+if (state.nkt >= cost && cost > 0) {
+
+state.nkt -= cost; playSound('success');
+
+showNotif(T('buyPass'));
+
+updateUI();
+
+saveGame();
+
+} else if (cost === 0) {
+
+playSound('success');
+
+showNotif(T('free'));
+
+} else {
+
+playSound('error');
+
+showNotif(T('noMoney'));
+
+} };
+
+gameDiv.appendChild(passBtn);
+
+} results.appendChild(gameDiv);
+
+} } catch (e) {
+
+playSound('error');
+
+showNotif(T('errApi'));
+
+results.innerHTML = ''; } } function onResize() {
+
+let wrapper = document.getElementById('game-wrapper');
+
+let scaleX = window.innerWidth / 950; let scaleY = window.innerHeight / 700; let scale = Math.min(scaleX, scaleY);
+
+let dx = (window.innerWidth - 950 * scale) / 2; let dy = (window.innerHeight - 700 * scale) / 2; wrapper.style.transform = `translate(${
+
+dx}px, ${
+
+dy}px) scale(${
+
+scale})`; } window.addEventListener('resize', onResize);
+
+document.querySelectorAll('.interactable').forEach(el => {
+
+el.addEventListener('mouseover', () => {
+
+if(!state.isWalking && !state.isShowering) playSound('blip');
+
+});
+
+el.addEventListener('click', (e) => {
+
+e.stopPropagation();
+
+if (state.isShowering && el.id === 'obj-shower') {
+
+triggerPeekEvent();
+
+return; } if (state.isWalking || state.isShowering) return; playSound('click');
+
+const id = el.id; const data = actionsData[id]; if (!data) return; const menu = document.getElementById('action-menu');
+
+menu.innerHTML = `<div style="text-align:center; font-weight:900; margin-bottom:8px; border-bottom: 3px solid #dcdde1; padding-bottom:5px; color: var(--ui-border);
+
+">${
+
+data.name}</div>`; data.actions.forEach(act => {
+
+const btn = document.createElement('button');
+
+btn.className = 'action-btn'; btn.innerText = act.name; btn.onclick = () => {
+
+playSound('click');
+
+if (act.req && !act.req()) {
+
+playSound('error');
+
+showNotif(act.failMsg);
+
+} else {
+
+moveToAndDo(data.targetX, act.duration, act.state, act.cb);
+
+} };
+
+menu.appendChild(btn);
+
+});
+
+const rect = el.getBoundingClientRect();
+
+const wrapperRect = document.getElementById('game-wrapper').getBoundingClientRect();
+
+const scale = parseFloat(document.getElementById('game-wrapper').style.transform.split('scale(')[1]) || 1; let left = (e.clientX - wrapperRect.left) / scale; let top = (e.clientY - wrapperRect.top) / scale; if (left > 800) left = 800; menu.style.left = left + 'px'; menu.style.top = top + 'px'; menu.style.display = 'block'; });
+
+});
+
+// Decorative particles function spawnDust() {
+
+if(state.isSleeping) return; let room = document.getElementById('room-main');
+
+let dust = document.createElement('div');
+
+dust.className = 'dust-particle'; dust.style.left = Math.random() * 900 + 'px'; dust.style.top = (Math.random() * 300 + 100) + 'px'; room.appendChild(dust);
+
+setTimeout(() => dust.remove(), 4000);
+
+} setInterval(spawnDust, 800);
+
+function doLoading() {
+
+let loadProgress = 0; let loadInt = setInterval(() => {
+
+loadProgress += 2; document.getElementById('loading-fill').style.width = loadProgress + '%'; if(loadProgress >= 100) {
+
+clearInterval(loadInt);
+
+document.getElementById('loading-content').style.display = 'none'; document.getElementById('tap-to-start').style.display = 'block'; } }, 30);
+
+} function startGame() {
+
+if(!audioInit) {
+
+audioInit = true; if(audioCtx.state === 'suspended') audioCtx.resume();
+
+} playSound('success');
+
+document.getElementById('loading-screen').style.display = 'none'; document.getElementById('game-wrapper').style.display = 'block'; init();
+
+} function init() {
+
+applyLang();
+
+loadGame();
+
+updateUI();
+
+onResize();
+
+setInterval(() => {
+
+if (state.isSleeping) return; state.gameTime = (state.gameTime + 1) % 1440; state.energy = Math.max(0, state.energy - 0.5);
+
+state.hunger = Math.max(0, state.hunger - 0.3);
+
+let miningRate = 2; if (state.upgrades['obj-desk'] >= 2) miningRate += 1; if (state.upgrades['obj-desk'] >= 3) miningRate += 3; state.nktPool += miningRate; if (state.energy === 0) {
+
+zeroEnergyTicks++; if (zeroEnergyTicks % 30 === 1) {
+
+playSound('error');
+
+showNotif(T('tired'));
+
+} } else {
+
+zeroEnergyTicks = 0; } if (state.hunger === 0) document.getElementById('neko').classList.add('dizzy');
+
+else document.getElementById('neko').classList.remove('dizzy');
+
+if (state.gameTime % 5 === 0) saveGame();
+
+updateUI();
+
+}, 1000);
+
+} window.onload = doLoading;
+
+</script>
+</body>
+    </html>
